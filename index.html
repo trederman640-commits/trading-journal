@@ -8,6 +8,10 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0b0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Itachi Journal">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -530,6 +534,7 @@ const ICON = {
   moon: svg('<path d="M20.5 13.5A8.5 8.5 0 1 1 10.5 3.5a6.5 6.5 0 0 0 10 10z"/>'),
   spark: svg('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>'),
   search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  download: svg('<path d="M12 3v12M7 10.5l5 5 5-5M4 20h16"/>'),
   lock: svg('<rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V7.5a4 4 0 0 1 8 0V11"/>'),
   refresh: svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>'),
   megaphone: svg('<path d="M3 10.5v3a1 1 0 0 0 1 1h2.5L13 19V5L6.5 9.5H4a1 1 0 0 0-1 1z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/>')
@@ -561,6 +566,7 @@ function applyLang(){
     ${nav.filter(([p]) => p !== "ads").map(([p, ic, t]) => `<a class="nav ${locked ? "locked" : ""}" href="#${p}" data-page="${p}">${ICON[ic]}${t}${locked ? `<span class="lk">${ICON.lock}</span>` : p === "trades" ? `<span class="cnt" id="navCnt"></span>` : ""}</a>`).join("")}
     <div class="sec">${L("الحساب", "Account")}</div>
     ${isOwner() ? `<a class="nav" href="#ads" data-page="ads">${ICON.megaphone}${L("لوحة الأدمين", "Admin panel")}<span class="cnt" id="navAdminCnt"></span></a>` : ""}
+    ${isStandalone() ? "" : `<button class="nav" data-act="install-app">${ICON.download}${L("تثبيت التطبيق", "Install the app")}</button>`}
     <button class="nav" data-act="theme">${ICON.moon}${L("الوضع الليلي / النهاري", "Dark / light")}</button>
     <button class="nav" data-act="lang">${ICON.globe}${L("English", "العربية")}</button>
     <a class="nav" href="#settings" data-page="settings">${ICON.gear}${L("الإعدادات", "Settings")}</a>
@@ -1779,6 +1785,8 @@ async function onUser(user){
     });
   }else{
     unsubMine = fb.onSnapshot(fb.doc(fb.db, "requests", user.uid), d => {
+      // Offline, a missing cached copy says nothing about the request: keep the last known access
+      if(d.metadata.fromCache && !d.exists()) return;
       myRequest = d.exists() ? d.data() : null;
       const ok = myRequest?.status === "approved";
       if(ok !== accessOk){ accessOk = ok; write(KEY + "-access-ok", ok); applyLang(); route(); }
@@ -2057,6 +2065,7 @@ function showWelcome(){
     <p class="wl-by">${L("هذا التطبيق من صنع <b>إيتاشي</b>", "This app was made by <b>Itachi</b>")}</p>
     <p class="muted">${L("لا تنسَ الاشتراك في حساباتي للمزيد من المحتوى والأدوات التي ستفيدك في التداول.", "Don't forget to follow my accounts for more content and tools that will help your trading.")}</p>
     <div class="wl-socials">${socialLinks(true)}</div>
+    ${isStandalone() ? "" : `<button class="btn ghost block" data-act="install-app">${ICON.download}${L("ثبّت التطبيق على جهازك", "Install the app on your device")}</button>`}
     <button class="btn block" data-act="close-welcome">${L("ابدأ", "Start")}</button></div>`;
   $("welcomeDlg").showModal();
 }
@@ -2065,7 +2074,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 1;
+const APP_VERSION = 2;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2102,6 +2111,28 @@ document.addEventListener("change", async e => {
   profile = {...(profile || {}), avatar: await squareAvatar(e.target.files[0])};
   saveAll(); applyLang(); route();
 });
+
+/* ---------- installable app ---------- */
+// The browser offers the install prompt only on supported devices; elsewhere the button shows manual steps.
+let installEvt = null;
+function isStandalone(){ return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; }
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; });
+window.addEventListener("appinstalled", () => { installEvt = null; toast(L("تم تثبيت التطبيق", "The app is installed")); });
+if("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+actions["install-app"] = async () => {
+  if(installEvt){
+    const evt = installEvt; installEvt = null;
+    evt.prompt(); await evt.userChoice.catch(() => {});
+    return;
+  }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  $("welcomeDlg").close();
+  $("welcomeDlg").innerHTML = `<div class="welcome"><div class="wl-mark">${EMBLEM}</div><h2>${L("تثبيت التطبيق", "Install the app")}</h2>
+    <p class="muted">${ios ? L("في Safari: اضغط زر المشاركة، ثم «إضافة إلى الشاشة الرئيسية».", "In Safari: tap Share, then “Add to Home Screen”.")
+      : L("افتح قائمة المتصفح (⋮)، ثم اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».", "Open the browser menu (⋮), then choose “Install app” or “Add to Home screen”.")}</p>
+    <button class="btn block" data-act="close-welcome">${L("حسناً", "OK")}</button></div>`;
+  $("welcomeDlg").showModal();
+};
 
 /* ---------- demo data ---------- */
 function loadDemo(){
