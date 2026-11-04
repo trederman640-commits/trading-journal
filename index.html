@@ -1308,6 +1308,8 @@ pages.settings = () => {
         </tbody></table></div>
       <div class="panel"><h2>${L("اللغة", "Language")}</h2>
         <div class="tabs"><button class="${lang === "ar" ? "on" : ""}" data-act="set-lang" data-v="ar">العربية</button><button class="${lang === "en" ? "on" : ""}" data-act="set-lang" data-v="en">English</button></div>
+        <h2 style="margin-top:20px">${L("الإصدار", "Version")} <span class="cnt" id="appVer">${APP_VERSION}</span></h2>
+        <button class="btn ghost" data-act="check-update">${ICON.refresh}${L("البحث عن تحديث", "Check for updates")}</button>
         <h2 style="margin-top:20px">${L("المظهر", "Appearance")}</h2><button class="btn ghost" data-act="theme">${L("تبديل الوضع الليلي / النهاري", "Toggle dark / light mode")}</button>
         <h2 style="margin-top:20px">${L("النسخ الاحتياطي", "Backup")}</h2>
         <p class="hint">${L("بياناتك محفوظة في هذا المتصفح فقط. صدّر نسخة احتياطية بانتظام (تشمل الصور).", "Your data is stored in this browser only. Export a backup regularly (includes screenshots).")}</p>
@@ -2100,7 +2102,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2113,9 +2115,20 @@ async function checkVersion(){
     }
   }catch(e){}
 }
-actions["do-update"] = () => location.reload();
-setInterval(checkVersion, 10 * 60000);
+actions["do-update"] = async () => {
+  // Skips GitHub's CDN and picks up a new service worker first, so the reload can't return the old copy
+  const reg = await navigator.serviceWorker?.getRegistration().catch(() => null);
+  await reg?.update().catch(() => {});
+  location.replace(location.pathname + "?v=" + Date.now() + location.hash);
+};
+actions["check-update"] = async () => {
+  await checkVersion();
+  if($("updBar").hidden) toast(L("عندك آخر إصدار", "You have the latest version"));
+};
+setInterval(checkVersion, 2 * 60000);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") checkVersion(); });
+window.addEventListener("focus", checkVersion);
+window.addEventListener("pageshow", checkVersion);
 
 /* ---------- avatars ---------- */
 // Square-cropped 256px JPEG, small enough to live in the profile
