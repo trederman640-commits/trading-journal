@@ -83,6 +83,8 @@ svg{display:block}
 .float-ad{position:fixed;bottom:20px;inset-inline-end:20px;width:290px;z-index:40;animation:adin .5s cubic-bezier(.2,.7,.2,1) both}
 [dir="ltr"] .float-ad{--from:40px}
 .float-ad:empty{display:none}
+/* Blur behind these cards could leave them unpainted after a dialog closes */
+.adgrid .panel,#view>.panel.empty{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--solid)}
 .linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;text-decoration:underline;padding:4px}
 .linkbtn:hover{color:var(--ink)}
 .reqlist{display:flex;flex-direction:column;margin-top:12px}
@@ -1910,7 +1912,7 @@ function adminPage(){
       <div class="reqlist">${!reqLoaded ? `<div class="empty">${L("جارٍ التحميل...", "Loading...")}</div>`
         : list.length ? list.map(reqRow).join("") : `<div class="empty">${adminTab === "pending" ? L("لا توجد طلبات جديدة. ستظهر هنا فوراً عندما يطلب أحد الإذن.", "No new requests. They appear here instantly when someone asks.") : L("لا يوجد أحد هنا.", "Nobody here.")}</div>`}</div>
     </div>
-    <div class="head" style="margin-top:6px"><h1 style="font-size:22px">${L("الإعلانات", "Announcements")}</h1>
+    <div class="head" style="margin-top:6px"><h1 style="font-size:22px">${L("الإعلانات", "Announcements")} <span class="cnt">${remoteAds.length}</span></h1>
       <button class="btn" data-act="add-ad">${ICON.plus}${L("إعلان جديد", "New announcement")}</button></div>
     <p class="hint" style="margin:0">${L("الإعلان يبقى ظاهراً حتى تقرر: «إيقاف» يخفيه مؤقتاً، و«حذف» يزيله نهائياً. كل تغيير يصل للمستخدمين المتصلين فوراً.", "An announcement stays up until you decide: “Pause” hides it for now, “Delete” removes it for good. Every change reaches online users instantly.")}</p>
     ${ownerStatus ? `<p class="hint" style="margin:0">${ownerStatus}</p>` : ""}
@@ -1953,6 +1955,7 @@ function openAd(a){
   $("adDlg").showModal();
 }
 let adPreviewFn = () => {};
+$("adDlg").addEventListener("close", () => requestAnimationFrame(route));
 // Announcement images are stored with the announcement, so keep them small
 function adImage(file){
   return new Promise(res => {
@@ -2102,7 +2105,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
