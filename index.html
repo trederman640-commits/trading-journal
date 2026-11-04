@@ -443,7 +443,9 @@ h1.ov{font-size:32px;font-weight:500;letter-spacing:-.025em}
 
 @media (max-width:1150px){ .kcards{grid-template-columns:repeat(2,minmax(0,1fr))} .row3{grid-template-columns:1fr 1fr} }
 @media (max-width:900px){ .row3{grid-template-columns:1fr} .side .sbsearch,.side .sgoal{display:none} h1.ov{font-size:26px} }
-@media (max-width:560px){ .kcards{grid-template-columns:1fr} }
+@media (max-width:560px){ .kcards{grid-template-columns:1fr}
+  .rstats tr{display:grid;grid-template-columns:minmax(0,1fr) auto}
+  .rstats td{display:block;white-space:normal} }
 @media (prefers-reduced-motion: reduce){ *,*::before{animation:none!important;transition:none!important} }
 
 @media (max-width:1150px){
@@ -1209,7 +1211,7 @@ pages.reports = () => {
       [L("أيام التداول","Trading days"), s.tradingDays], [L("نسبة الأيام الرابحة","Day win %"), pct(s.dayWr)], [L("أفضل يوم","Best day"), money(s.bestDay), "pos"], [L("أسوأ يوم","Worst day"), money(s.worstDay), "neg"],
       [L("إجمالي الرسوم","Total fees"), money(s.fees)]
     ];
-    body = `<div class="panel"><table><tbody>${rows.reduce((h, r, i) => h + (i % 2 ? "" : "<tr>") + `<td>${r[0]}</td><td class="num ${r[2] || ""}"><b>${r[1]}</b></td>` + (i % 2 ? "</tr>" : ""), "")}</tbody></table></div>
+    body = `<div class="panel"><table class="rstats"><tbody>${rows.reduce((h, r, i) => h + (i % 2 ? "" : "<tr>") + `<td>${r[0]}</td><td class="num ${r[2] || ""}"><b>${r[1]}</b></td>` + (i % 2 ? "</tr>" : ""), "")}</tbody></table></div>
       <div class="panel"><h2>${L("منحنى الرصيد", "Equity curve")}</h2><canvas id="cEquity"></canvas></div>`;
   } else {
     const keyFns = {
@@ -2106,7 +2108,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 9;
+const APP_VERSION = 10;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
