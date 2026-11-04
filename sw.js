@@ -26,7 +26,10 @@ self.addEventListener("fetch", e => {
 async function networkFirst(req){
   const cache = await caches.open(CACHE);
   try{
-    const res = await fetch(req.url, {cache: "no-cache"});
+    // The query skips GitHub's CDN, which can serve an old copy for 10 minutes after a publish
+    const fresh = new URL(req.url);
+    fresh.searchParams.set("_", Date.now());
+    const res = await fetch(fresh, {cache: "no-store"});
     if(res.ok) cache.put(req.url, res.clone());
     return res;
   }catch(err){
