@@ -72,19 +72,19 @@ svg{display:block}
 .tip b{display:block;color:var(--ink);font-size:13px;margin-bottom:2px}
 .tip a{color:var(--ink);font-weight:600}
 /* announcements */
-.ad{border-radius:20px;padding:14px;background:radial-gradient(300px 160px at 90% -10%,rgba(255,255,255,.18),transparent 60%),var(--inv);color:var(--inv-ink);margin:6px 0 8px;display:flex;flex-direction:column;gap:8px;white-space:normal}
-.ad-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.ad-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.12);display:inline-flex;align-items:center}
-.ad-badge i{width:6px;height:6px;border-radius:50%;display:inline-block;margin-inline-end:6px;background:#5b93f0}
-.ad-badge i.service{background:#3fd28f} .ad-badge i.offer{background:#f0b840} .ad-badge i.alert{background:#ff6b6f}
-.ad-x{background:rgba(255,255,255,.1);border:0;color:var(--inv-ink);cursor:pointer;font-size:12px;line-height:1;padding:5px 10px;border-radius:999px}
-.ad-x:hover{background:rgba(255,255,255,.2)}
+.nt{border-radius:20px;padding:14px;background:radial-gradient(300px 160px at 90% -10%,rgba(255,255,255,.18),transparent 60%),var(--inv);color:var(--inv-ink);margin:6px 0 8px;display:flex;flex-direction:column;gap:8px;white-space:normal}
+.nt-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nt-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.12);display:inline-flex;align-items:center}
+.nt-badge i{width:6px;height:6px;border-radius:50%;display:inline-block;margin-inline-end:6px;background:#5b93f0}
+.nt-badge i.service{background:#3fd28f} .nt-badge i.offer{background:#f0b840} .nt-badge i.alert{background:#ff6b6f}
+.nt-x{background:rgba(255,255,255,.1);border:0;color:var(--inv-ink);cursor:pointer;font-size:12px;line-height:1;padding:5px 10px;border-radius:999px}
+.nt-x:hover{background:rgba(255,255,255,.2)}
 @keyframes adin{from{opacity:0;transform:translateX(var(--from,-40px))}to{opacity:1;transform:none}}
-.float-ad{position:fixed;bottom:20px;inset-inline-end:20px;width:290px;z-index:40;animation:adin .5s cubic-bezier(.2,.7,.2,1) both}
-[dir="ltr"] .float-ad{--from:40px}
-.float-ad:empty{display:none}
+.float-nt{position:fixed;bottom:20px;inset-inline-end:20px;width:290px;z-index:40;animation:adin .5s cubic-bezier(.2,.7,.2,1) both}
+[dir="ltr"] .float-nt{--from:40px}
+.float-nt:empty{display:none}
 /* Blur behind these cards could leave them unpainted after a dialog closes */
-.adgrid .panel,#view>.panel.empty{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--solid)}
+.ntgrid .panel,#view>.panel.empty{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--solid)}
 .linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;text-decoration:underline;padding:4px}
 .linkbtn:hover{color:var(--ink)}
 .reqlist{display:flex;flex-direction:column;margin-top:12px}
@@ -139,23 +139,23 @@ svg{display:block}
 .updbar span{display:flex;align-items:center;gap:8px}
 .updbar svg{width:16px;height:16px}
 .updbar[hidden]{display:none}
-.float-ad .ad{margin:0;border:1px solid var(--inv-line);box-shadow:0 24px 60px rgba(0,0,0,.45)}
-.ad-x:hover{color:var(--inv-ink)}
-.ad-img{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;border-radius:14px;display:block;transition:transform .3s}
-.ad a:hover .ad-img{transform:scale(1.02)}
-.ad-title{font-size:14px;line-height:1.4}
-.ad-body{margin:0;font-size:12.5px;color:var(--inv-muted);line-height:1.6}
-.ad .ad-btn{background:var(--inv-ink);color:var(--inv);align-self:flex-start}
-.ad-nav{display:flex;align-items:center;gap:8px;justify-content:center}
-.ad-nav button{background:none;border:0;color:var(--inv-muted);cursor:pointer;font-size:18px;padding:0 4px}
+.float-nt .nt{margin:0;border:1px solid var(--inv-line);box-shadow:0 24px 60px rgba(0,0,0,.45)}
+.nt-x:hover{color:var(--inv-ink)}
+.nt-img{width:100%;aspect-ratio:4/3;height:auto;object-fit:cover;border-radius:14px;display:block;transition:transform .3s}
+.nt a:hover .nt-img{transform:scale(1.02)}
+.nt-title{font-size:14px;line-height:1.4}
+.nt-body{margin:0;font-size:12.5px;color:var(--inv-muted);line-height:1.6}
+.nt .nt-btn{background:var(--inv-ink);color:var(--inv);align-self:flex-start}
+.nt-nav{display:flex;align-items:center;gap:8px;justify-content:center}
+.nt-nav button{background:none;border:0;color:var(--inv-muted);cursor:pointer;font-size:18px;padding:0 4px}
 .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.25);display:inline-block;margin:0 2px}
 .dots i.on{background:var(--inv-ink)}
-.adgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
-.adrow{display:flex;flex-direction:column;gap:10px}
-.adrow .ad{margin:0}
-.admeta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-#mainAd{display:none}
-#mainAd:empty{display:none!important}
+.ntgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.ntrow{display:flex;flex-direction:column;gap:10px}
+.ntrow .nt{margin:0}
+.ntmeta{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#mainNt{display:none}
+#mainNt:empty{display:none!important}
 
 /* layout */
 main{padding:28px clamp(16px,2.6vw,36px) 56px;min-width:0;display:flex;flex-direction:column;gap:16px}
@@ -453,11 +453,11 @@ h1.ov{font-size:32px;font-weight:500;letter-spacing:-.025em}
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
   .side{margin:0;border-radius:0;position:sticky;top:0;z-index:10;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:8px;border:0;border-bottom:1px solid var(--line)}
-  .side .logo,.side .ws,.side .sec,.side .spacer,.side .tip,#sideAd{display:none}
+  .side .logo,.side .ws,.side .sec,.side .spacer,.side .tip,#sideNt{display:none}
   .side .socials{display:none}
-  .float-ad{inset-inline:12px;bottom:12px;width:auto}
-  .float-ad .ad-img{aspect-ratio:16/9}
-  #mainAd .ad{margin:0}
+  .float-nt{inset-inline:12px;bottom:12px;width:auto}
+  .float-nt .nt-img{aspect-ratio:16/9}
+  #mainNt .nt{margin:0}
   .side>.btn{margin:0}
   .nav{width:auto}
   .row,.row.r12,.row.r21,.nb{grid-template-columns:1fr}
@@ -477,14 +477,14 @@ h1.ov{font-size:32px;font-weight:500;letter-spacing:-.025em}
   <main id="view"></main>
 </div>
 
-<div class="float-ad" id="floatAd"></div>
+<div class="float-nt" id="floatNt"></div>
 <div class="updbar" id="updBar" hidden></div>
 <dialog id="welcomeDlg"></dialog>
 <input type="file" id="setAvIn" accept="image/*" hidden>
 
 <dialog id="tradeDlg"><form class="form" id="tradeForm" method="dialog"></form></dialog>
 <dialog id="pbDlg"><form class="form" id="pbForm" method="dialog"></form></dialog>
-<dialog id="adDlg"><form class="form" id="adForm" method="dialog"></form></dialog>
+<dialog id="ntDlg"><form class="form" id="ntForm" method="dialog"></form></dialog>
 <dialog id="lightbox"><img id="lbImg" alt=""></dialog>
 
 <div class="onboard" id="onboard">
@@ -576,7 +576,7 @@ function applyLang(){
     <button class="nav" data-act="lang">${ICON.globe}${L("English", "العربية")}</button>
     <a class="nav" href="#settings" data-page="settings">${ICON.gear}${L("الإعدادات", "Settings")}</a>
     <div class="spacer"></div>
-    <div id="sideAd"></div>
+    <div id="sideNt"></div>
     <div class="sgoal" id="sideGoal"></div>
     <div class="socials"><span>${L("تابع إيتاشي", "Follow Itachi")}</span>${socialLinks()}</div>`;
   $("obLogo").innerHTML = `<span class="mark emblem">${EMBLEM}</span>${APP_NAME}`;
@@ -1842,15 +1842,15 @@ const adsVisible = () => adsDismissed ? [] : remoteAds.filter(a => adStatus(a)[0
 function adCard(a, opts = {}){
   const link = safeUrl(a.link), total = opts.total || 1;
   const img = a.imageData && /^data:image\/(jpeg|png|webp);base64,/.test(a.imageData) ? a.imageData : safeImg(a.image);
-  const pic = img ? `<img class="ad-img" src="${esc(img)}" alt="${esc(a.title)}" onerror="this.remove()">` : "";
-  return `<div class="ad ${img ? "has-img" : ""}">
-    <div class="ad-top"><span class="ad-badge"><i class="${esc(a.type)}"></i>${AD_TYPES()[a.type] || AD_TYPES().update}</span>
-      ${opts.preview ? "" : `<button class="ad-x" data-act="ad-hide">${L("إخفاء", "Hide")} ×</button>`}</div>
+  const pic = img ? `<img class="nt-img" src="${esc(img)}" alt="${esc(a.title)}" onerror="this.remove()">` : "";
+  return `<div class="nt ${img ? "has-img" : ""}">
+    <div class="nt-top"><span class="nt-badge"><i class="${esc(a.type)}"></i>${AD_TYPES()[a.type] || AD_TYPES().update}</span>
+      ${opts.preview ? "" : `<button class="nt-x" data-act="ad-hide">${L("إخفاء", "Hide")} ×</button>`}</div>
     ${pic && link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer">${pic}</a>` : pic}
-    ${a.title || !img ? `<b class="ad-title">${esc(a.title) || L("عنوان الإعلان", "Announcement title")}</b>` : ""}
-    ${a.body ? `<p class="ad-body">${esc(a.body)}</p>` : ""}
-    ${link ? `<a class="btn sm ad-btn" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(a.linkText) || L("اعرف المزيد", "Learn more")}</a>` : ""}
-    ${total > 1 ? `<div class="ad-nav"><button data-act="ad-prev">‹</button><span class="dots">${Array.from({length: total}, (_, i) => `<i class="${i === opts.index ? "on" : ""}"></i>`).join("")}</span><button data-act="ad-next">›</button></div>` : ""}
+    ${a.title || !img ? `<b class="nt-title">${esc(a.title) || L("عنوان الإعلان", "Announcement title")}</b>` : ""}
+    ${a.body ? `<p class="nt-body">${esc(a.body)}</p>` : ""}
+    ${link ? `<a class="btn sm nt-btn" href="${esc(link)}" target="_blank" rel="noopener noreferrer">${esc(a.linkText) || L("اعرف المزيد", "Learn more")}</a>` : ""}
+    ${total > 1 ? `<div class="nt-nav"><button data-act="ad-prev">‹</button><span class="dots">${Array.from({length: total}, (_, i) => `<i class="${i === opts.index ? "on" : ""}"></i>`).join("")}</span><button data-act="ad-next">›</button></div>` : ""}
   </div>`;
 }
 let adIndex = 0, adTimer = null;
@@ -1860,8 +1860,8 @@ function renderAds(){
   clearInterval(adTimer);
   if(adIndex >= list.length) adIndex = 0;
   const html = list.length ? adCard(list[adIndex], {total: list.length, index: adIndex}) : "";
-  if($("sideAd")) $("sideAd").innerHTML = `<div class="tip"><b>${L("نسخة احتياطية", "Backup")}</b>${L("بياناتك محفوظة في هذا المتصفح فقط.", "Your data lives in this browser only.")} <a href="#settings">${L("صدّر نسخة", "Export one")}</a></div>`;
-  $("floatAd").innerHTML = html;
+  if($("sideNt")) $("sideNt").innerHTML = `<div class="tip"><b>${L("نسخة احتياطية", "Backup")}</b>${L("بياناتك محفوظة في هذا المتصفح فقط.", "Your data lives in this browser only.")} <a href="#settings">${L("صدّر نسخة", "Export one")}</a></div>`;
+  $("floatNt").innerHTML = html;
   if(list.length > 1) adTimer = setInterval(() => { adIndex = (adIndex + 1) % list.length; renderAds(); }, 8000);
 }
 
@@ -1896,8 +1896,8 @@ function adminPage(){
       ${r.status === "rejected" ? `<button class="btn danger sm" data-act="req-delete" data-uid="${esc(r.uid)}">${L("حذف", "Delete")}</button>` : ""}
     </div></div>`;
   const adRow = a => { const [st, stl] = adStatus(a);
-    return `<div class="panel adrow">${adCard(a, {preview: true})}
-      <div class="admeta"><span class="pill ${st === "live" ? "ok" : ""}">${stl}</span>
+    return `<div class="panel ntrow">${adCard(a, {preview: true})}
+      <div class="ntmeta"><span class="pill ${st === "live" ? "ok" : ""}">${stl}</span>
         <span class="hint">${a.start || "…"} ${L("←", "→")} ${a.end || L("بدون نهاية", "no end")}</span>
         <span style="display:flex;gap:6px;margin-inline-start:auto">
           <button class="btn ghost sm" data-act="toggle-ad" data-id="${esc(a.id)}">${a.active ? L("إيقاف", "Pause") : L("تفعيل", "Activate")}</button>
@@ -1916,7 +1916,7 @@ function adminPage(){
       <button class="btn" data-act="add-ad">${ICON.plus}${L("إعلان جديد", "New announcement")}</button></div>
     <p class="hint" style="margin:0">${L("الإعلان يبقى ظاهراً حتى تقرر: «إيقاف» يخفيه مؤقتاً، و«حذف» يزيله نهائياً. كل تغيير يصل للمستخدمين المتصلين فوراً.", "An announcement stays up until you decide: “Pause” hides it for now, “Delete” removes it for good. Every change reaches online users instantly.")}</p>
     ${ownerStatus ? `<p class="hint" style="margin:0">${ownerStatus}</p>` : ""}
-    ${remoteAds.length ? `<div class="adgrid">${remoteAds.map(adRow).join("")}</div>` : `<div class="panel empty">${L("لا توجد إعلانات. أنشئ أول إعلان.", "No announcements. Create the first one.")}</div>`}` };
+    ${remoteAds.length ? `<div class="ntgrid">${remoteAds.map(adRow).join("")}</div>` : `<div class="panel empty">${L("لا توجد إعلانات. أنشئ أول إعلان.", "No announcements. Create the first one.")}</div>`}` };
 }
 
 let editingAd = null, adDraft = null;
@@ -1924,7 +1924,7 @@ function openAd(a){
   editingAd = a || null;
   adDraft = a ? {...a} : {type: "update", title: "", body: "", link: "", linkText: "", image: "", imageData: "", start: today(), end: "", active: true};
   const v = k => esc(adDraft[k] ?? "");
-  $("adForm").innerHTML = `<h2>${a ? L("تعديل الإعلان", "Edit announcement") : L("إعلان جديد", "New announcement")}</h2>
+  $("ntForm").innerHTML = `<h2>${a ? L("تعديل الإعلان", "Edit announcement") : L("إعلان جديد", "New announcement")}</h2>
     <label class="half">${L("نوع الإعلان", "Type")}<select name="type">${Object.entries(AD_TYPES()).map(([k, l]) => `<option value="${k}" ${adDraft.type === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
     <label class="half">${L("العنوان", "Title")}<input name="title" value="${v("title")}" maxlength="80" placeholder="${L("اختياري إذا وضعت صورة", "Optional when you add an image")}"></label>
     <label class="full">${L("النص", "Text")}<textarea name="body" rows="3" maxlength="300" placeholder="${L("اشرح باختصار...", "Describe it briefly...")}">${v("body")}</textarea></label>
@@ -1935,27 +1935,27 @@ function openAd(a){
         <button type="button" class="btn sm" data-act="ad-upload">${ICON.plus}${L("رفع صورة من جهازك", "Upload from your device")}</button>
         <button type="button" class="btn ghost sm" data-act="ad-noimg">${L("إزالة الصورة", "Remove image")}</button>
         <input name="image" class="ltr inp" style="flex:1;min-width:180px" value="${v("image")}" placeholder="${L("أو الصق رابط صورة https://...", "or paste an image link https://...")}"></div>
-      <input type="file" id="adImgIn" accept="image/*" hidden></div>
+      <input type="file" id="ntImgIn" accept="image/*" hidden></div>
     <label class="half">${L("يبدأ العرض من", "Show from")}<input name="start" type="date" value="${v("start")}"></label>
     <label class="half">${L("ينتهي في (اختياري)", "Until (optional)")}<input name="end" type="date" value="${v("end")}"></label>
     <label class="full" style="flex-direction:row;align-items:center;gap:8px;color:var(--ink)"><input type="checkbox" name="active" ${adDraft.active ? "checked" : ""}> ${L("الإعلان نشط", "Announcement is active")}</label>
     <h3>${L("معاينة", "Preview")}</h3>
-    <div class="full" id="adPreview" style="max-width:240px"></div>
+    <div class="full" id="ntPreview" style="max-width:240px"></div>
     <div class="actions">${a ? `<button type="button" class="btn danger" data-act="del-ad">${L("حذف", "Delete")}</button>` : ""}
       <button type="button" class="btn ghost" data-act="close-ad">${L("إلغاء", "Cancel")}</button><button type="submit" class="btn">${L("حفظ ونشر", "Save & publish")}</button></div>`;
-  const preview = () => { const d = Object.fromEntries(new FormData($("adForm"))); $("adPreview").innerHTML = adCard({...d, imageData: d.image ? "" : adDraft.imageData, active: true}, {preview: true}); };
-  $("adForm").oninput = preview; preview();
-  adPreviewFn = preview;
-  $("adImgIn").onchange = async e => {
+  const preview = () => { const d = Object.fromEntries(new FormData($("ntForm"))); $("ntPreview").innerHTML = adCard({...d, imageData: d.image ? "" : adDraft.imageData, active: true}, {preview: true}); };
+  $("ntForm").oninput = preview; preview();
+  ntPreviewFn = preview;
+  $("ntImgIn").onchange = async e => {
     const file = e.target.files[0]; e.target.value = "";
     if(!file) return;
     adDraft.imageData = await adImage(file);
-    $("adForm").elements.image.value = ""; preview();
+    $("ntForm").elements.image.value = ""; preview();
   };
-  $("adDlg").showModal();
+  $("ntDlg").showModal();
 }
-let adPreviewFn = () => {};
-$("adDlg").addEventListener("close", () => requestAnimationFrame(route));
+let ntPreviewFn = () => {};
+$("ntDlg").addEventListener("close", () => requestAnimationFrame(route));
 // Announcement images are stored with the announcement, so keep them small
 function adImage(file){
   return new Promise(res => {
@@ -1968,8 +1968,8 @@ function adImage(file){
     img.src = URL.createObjectURL(file);
   });
 }
-$("adForm").addEventListener("submit", e => {
-  const d = Object.fromEntries(new FormData($("adForm")));
+$("ntForm").addEventListener("submit", e => {
+  const d = Object.fromEntries(new FormData($("ntForm")));
   const imageData = d.image.trim() ? "" : (adDraft.imageData || "");
   if(!d.title.trim() && !d.image.trim() && !imageData){ e.preventDefault(); alert(L("أضف صورة أو عنواناً للإعلان", "Add an image or a title")); return; }
   const id = editingAd?.id || "ad_" + uid();
@@ -2070,11 +2070,11 @@ Object.assign(actions, {
   "req-reject": el => fb.updateDoc(fb.doc(fb.db, "requests", el.dataset.uid), {status: "rejected", decidedAt: fb.serverTimestamp()}),
   "req-delete": el => { if(confirm(L("حذف هذا الطلب نهائياً؟", "Delete this request for good?"))) fb.deleteDoc(fb.doc(fb.db, "requests", el.dataset.uid)); },
   "add-ad": () => openAd(),
-  "ad-upload": () => $("adImgIn").click(),
-  "ad-noimg": () => { adDraft.imageData = ""; $("adForm").elements.image.value = ""; adPreviewFn(); },
+  "ad-upload": () => $("ntImgIn").click(),
+  "ad-noimg": () => { adDraft.imageData = ""; $("ntForm").elements.image.value = ""; ntPreviewFn(); },
   "edit-ad": el => openAd(remoteAds.find(a => a.id === el.dataset.id)),
-  "close-ad": () => $("adDlg").close(),
-  "del-ad": () => { if(!confirm(L("حذف هذا الإعلان؟", "Delete this announcement?"))) return; fb.deleteDoc(fb.doc(fb.db, "ads", editingAd.id)); $("adDlg").close(); },
+  "close-ad": () => $("ntDlg").close(),
+  "del-ad": () => { if(!confirm(L("حذف هذا الإعلان؟", "Delete this announcement?"))) return; fb.deleteDoc(fb.doc(fb.db, "ads", editingAd.id)); $("ntDlg").close(); },
   "del-ad-row": el => {
     const a = remoteAds.find(x => x.id === el.dataset.id);
     if(!a || !confirm(L(`حذف إعلان «${a.title || "بدون عنوان"}» نهائياً؟`, `Delete “${a.title || "Untitled"}” for good?`))) return;
@@ -2105,7 +2105,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 7;
+const APP_VERSION = 8;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
