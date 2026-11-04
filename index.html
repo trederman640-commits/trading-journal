@@ -1897,7 +1897,8 @@ function adminPage(){
         <span class="hint">${a.start || "…"} ${L("←", "→")} ${a.end || L("بدون نهاية", "no end")}</span>
         <span style="display:flex;gap:6px;margin-inline-start:auto">
           <button class="btn ghost sm" data-act="toggle-ad" data-id="${esc(a.id)}">${a.active ? L("إيقاف", "Pause") : L("تفعيل", "Activate")}</button>
-          <button class="btn ghost sm" data-act="edit-ad" data-id="${esc(a.id)}">${L("تعديل", "Edit")}</button></span></div></div>`; };
+          <button class="btn ghost sm" data-act="edit-ad" data-id="${esc(a.id)}">${L("تعديل", "Edit")}</button>
+          <button class="btn danger sm" data-act="del-ad-row" data-id="${esc(a.id)}">${L("حذف", "Delete")}</button></span></div></div>`; };
   return { html: `<div class="head"><h1>${L("لوحة الأدمين", "Admin panel")}</h1>
       <span class="live"><i></i>${esc(fbUser.email)}</span>
       <button class="btn ghost sm" data-act="owner-logout">${L("تسجيل الخروج", "Sign out")}</button></div>
@@ -1909,7 +1910,7 @@ function adminPage(){
     </div>
     <div class="head" style="margin-top:6px"><h1 style="font-size:22px">${L("الإعلانات", "Announcements")}</h1>
       <button class="btn" data-act="add-ad">${ICON.plus}${L("إعلان جديد", "New announcement")}</button></div>
-    <p class="hint" style="margin:0">${L("أي تغيير تحفظه هنا يظهر لكل المستخدمين المتصلين فوراً.", "Any change you save here shows to every online user instantly.")}</p>
+    <p class="hint" style="margin:0">${L("الإعلان يبقى ظاهراً حتى تقرر: «إيقاف» يخفيه مؤقتاً، و«حذف» يزيله نهائياً. كل تغيير يصل للمستخدمين المتصلين فوراً.", "An announcement stays up until you decide: “Pause” hides it for now, “Delete” removes it for good. Every change reaches online users instantly.")}</p>
     ${ownerStatus ? `<p class="hint" style="margin:0">${ownerStatus}</p>` : ""}
     ${remoteAds.length ? `<div class="adgrid">${remoteAds.map(adRow).join("")}</div>` : `<div class="panel empty">${L("لا توجد إعلانات. أنشئ أول إعلان.", "No announcements. Create the first one.")}</div>`}` };
 }
@@ -2069,6 +2070,11 @@ Object.assign(actions, {
   "edit-ad": el => openAd(remoteAds.find(a => a.id === el.dataset.id)),
   "close-ad": () => $("adDlg").close(),
   "del-ad": () => { if(!confirm(L("حذف هذا الإعلان؟", "Delete this announcement?"))) return; fb.deleteDoc(fb.doc(fb.db, "ads", editingAd.id)); $("adDlg").close(); },
+  "del-ad-row": el => {
+    const a = remoteAds.find(x => x.id === el.dataset.id);
+    if(!a || !confirm(L(`حذف إعلان «${a.title || "بدون عنوان"}» نهائياً؟`, `Delete “${a.title || "Untitled"}” for good?`))) return;
+    fb.deleteDoc(fb.doc(fb.db, "ads", a.id)).catch(err => { ownerStatus = `<span class="neg">${L("فشل الحذف", "Delete failed")}: ${esc(err.message)}</span>`; route(); });
+  },
   "toggle-ad": el => { const a = remoteAds.find(x => x.id === el.dataset.id); if(a) fb.updateDoc(fb.doc(fb.db, "ads", a.id), {active: !a.active}); },
   "ad-hide": () => { adsDismissed = true; renderAds(); },
   "ad-prev": () => { const c = adsVisible().length; adIndex = (adIndex - 1 + c) % c; renderAds(); },
@@ -2094,7 +2100,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
