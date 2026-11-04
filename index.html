@@ -757,7 +757,7 @@ function lineChart(c, pts, opt = {}){
   const draw = (hover, prog = 1) => {
     const {ctx, w, h} = setup(c);
     if(pts.length < 2){ if(!mini) emptyChart(ctx, w, h, L("أضف صفقات مغلقة لرؤية الرسم", "Add closed trades to see the chart")); return; }
-    const ink = opt.color || pnlColor(pts[pts.length - 1]), muted = cv("--muted");
+    const ink = opt.color || pnlColor(pts[hover ?? pts.length - 1]), muted = cv("--muted");
     const min = Math.min(0, ...pts), max = Math.max(0, ...pts), padT = mini ? 4 : 34, padB = mini ? 4 : (opt.labels ? 28 : 10);
     const x = i => Lm + (w - Lm - R) * i / (pts.length - 1);
     const y = v => padT + (h - padT - padB) * (1 - (v - min) / ((max - min) || 1));
@@ -774,13 +774,19 @@ function lineChart(c, pts, opt = {}){
         else { const xm = (x(i - 1) + x(i)) / 2; ctx.bezierCurveTo(xm, y(pts[i - 1]), xm, y(pts[i]), x(i), y(pts[i])); }
       }
     };
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, Lm + (w - Lm - R) * prog + 1, h); ctx.clip();
-    path(); ctx.lineTo(x(pts.length - 1), h - padB); ctx.lineTo(x(0), h - padB); ctx.closePath();
-    const g = ctx.createLinearGradient(0, padT, 0, h - padB); g.addColorStop(0, hexA(ink, mini ? .16 : opt.glow ? .3 : .2)); g.addColorStop(1, hexA(ink, 0));
-    ctx.fillStyle = g; ctx.fill();
-    path(); ctx.strokeStyle = ink; ctx.lineWidth = mini ? 1.6 : 2; ctx.lineJoin = "round";
-    if(opt.glow){ ctx.shadowColor = hexA(ink, .85); ctx.shadowBlur = 14; }
-    ctx.stroke(); ctx.shadowBlur = 0; ctx.restore();
+    // Above zero is drawn green and below zero red, each clipped to its side of the zero line
+    const zy = y(0), shown = Lm + (w - Lm - R) * prog + 1, alpha = mini ? .16 : opt.glow ? .3 : .2;
+    const band = (top, bottom, col, g0, g1) => {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, top, shown, bottom - top); ctx.clip();
+      path(); ctx.lineTo(x(pts.length - 1), zy); ctx.lineTo(x(0), zy); ctx.closePath();
+      const g = ctx.createLinearGradient(0, padT, 0, h - padB); g.addColorStop(0, hexA(col, g0)); g.addColorStop(1, hexA(col, g1));
+      ctx.fillStyle = g; ctx.fill();
+      path(); ctx.strokeStyle = col; ctx.lineWidth = mini ? 1.6 : 2; ctx.lineJoin = "round";
+      if(opt.glow){ ctx.shadowColor = hexA(col, .85); ctx.shadowBlur = 14; }
+      ctx.stroke(); ctx.restore();
+    };
+    if(opt.color) band(0, h, opt.color, alpha, 0);
+    else { band(0, zy, cv("--win"), alpha, 0); band(zy, h, cv("--loss"), 0, alpha); }
     if(hover != null){
       const px = x(hover), py = y(pts[hover]);
       ctx.strokeStyle = hexA(muted, .5); ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, h - padB); ctx.stroke(); ctx.setLineDash([]);
@@ -805,19 +811,26 @@ function lineChart(c, pts, opt = {}){
   }
 }
 // Tiny area chart without axes, drawn inside cards and asset rows
-function sparkline(c, pts, color){
+// With a base value the line is green above it and red below it; without one it uses a single color
+function sparkline(c, pts, color, base){
   if(!c || pts.length < 2) return;
   animate(prog => {
     const {ctx, w, h} = setup(c);
-    const min = Math.min(...pts), max = Math.max(...pts), pad = 3;
+    const split = base != null;
+    const min = Math.min(...pts, ...(split ? [base] : [])), max = Math.max(...pts, ...(split ? [base] : [])), pad = 3;
     const x = i => w * i / (pts.length - 1), y = v => pad + (h - 2 * pad) * (1 - (v - min) / ((max - min) || 1));
-    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, w * prog + 1, h); ctx.clip();
     const path = () => { ctx.beginPath(); ctx.moveTo(x(0), y(pts[0])); for(let i = 1; i < pts.length; i++){ const xm = (x(i - 1) + x(i)) / 2; ctx.bezierCurveTo(xm, y(pts[i - 1]), xm, y(pts[i]), x(i), y(pts[i])); } };
-    path(); ctx.lineTo(w, h); ctx.lineTo(0, h); ctx.closePath();
-    const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, hexA(color, .38)); g.addColorStop(1, hexA(color, 0));
-    ctx.fillStyle = g; ctx.fill();
-    path(); ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.shadowColor = hexA(color, .8); ctx.shadowBlur = 8; ctx.stroke();
-    ctx.restore();
+    const zy = split ? y(base) : h;
+    const band = (top, bottom, col, g0, g1) => {
+      ctx.save(); ctx.beginPath(); ctx.rect(0, top, w * prog + 1, bottom - top); ctx.clip();
+      path(); ctx.lineTo(w, zy); ctx.lineTo(0, zy); ctx.closePath();
+      const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, hexA(col, g0)); g.addColorStop(1, hexA(col, g1));
+      ctx.fillStyle = g; ctx.fill();
+      path(); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.shadowColor = hexA(col, .8); ctx.shadowBlur = 8; ctx.stroke();
+      ctx.restore();
+    };
+    if(split){ band(0, zy, cv("--win"), .38, 0); band(zy, h, cv("--loss"), 0, .38); }
+    else band(0, h, color, .38, 0);
   }, 1300);
 }
 function barChart(c, items, opt = {}){
@@ -1065,13 +1078,13 @@ pages.dashboard = () => {
     after(){
       $("dashRange").onchange = e => { dashRange = e.target.value; route(); };
       lineChart($("cEquity"), eqPts, {labels: eqLabels, jagged: true, glow: true, animate: true, pin: true});
-      sparkline($("k1"), eqPts, pnlColor(s.total));
-      sparkline($("k2"), wrPts, pnlColor(s.wr == null ? 0 : s.wr - 50));
+      sparkline($("k1"), eqPts, null, 0);
+      sparkline($("k2"), wrPts, null, 50);
       sparkline($("k3"), dayCounts.length > 1 ? dayCounts : [0, ...dayCounts], pnlColor(s.total));
-      sparkline($("k4"), BI ? balPts : pfPts, pnlColor(BI ? all.total : (s.pf ?? 1) - 1));
+      sparkline($("k4"), BI ? balPts : pfPts, null, BI ? BI.start : 1);
       document.querySelectorAll("canvas[data-asset]").forEach(c => {
         const pts = [0]; cur.filter(t => (t.symbol || "?").toUpperCase() === c.dataset.asset && pnl(t) !== null).sort(byTime).forEach(t => pts.push(pts[pts.length - 1] + pnl(t)));
-        sparkline(c, pts, pnlColor(pts[pts.length - 1]));
+        sparkline(c, pts, null, 0);
       });
       gauge($("cGauge"), sc ? sc.total : null, L("مؤشر الأداء", "Performance score"));
       barChart($("cDaily"), dayItems, {pos: cv("--win"), neg: cv("--loss"), muted: cv("--inv-muted"), grid: cv("--inv-line")});
@@ -2074,7 +2087,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 2;
+const APP_VERSION = 3;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
