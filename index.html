@@ -83,6 +83,8 @@ svg{display:block}
 .float-ad{position:fixed;bottom:20px;inset-inline-end:20px;width:290px;z-index:40;animation:adin .5s cubic-bezier(.2,.7,.2,1) both}
 [dir="ltr"] .float-ad{--from:40px}
 .float-ad:empty{display:none}
+.linkbtn{background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;text-decoration:underline;padding:4px}
+.linkbtn:hover{color:var(--ink)}
 .reqlist{display:flex;flex-direction:column;margin-top:12px}
 .reqrow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
 .reqrow:last-child{border-bottom:0}
@@ -566,6 +568,7 @@ function applyLang(){
     ${nav.filter(([p]) => p !== "ads").map(([p, ic, t]) => `<a class="nav ${locked ? "locked" : ""}" href="#${p}" data-page="${p}">${ICON[ic]}${t}${locked ? `<span class="lk">${ICON.lock}</span>` : p === "trades" ? `<span class="cnt" id="navCnt"></span>` : ""}</a>`).join("")}
     <div class="sec">${L("الحساب", "Account")}</div>
     ${isOwner() ? `<a class="nav" href="#ads" data-page="ads">${ICON.megaphone}${L("لوحة الأدمين", "Admin panel")}<span class="cnt" id="navAdminCnt"></span></a>` : ""}
+    <a class="nav" href="#account" data-page="account">${ICON.lock}${signedIn() ? L("حسابي", "My account") : L("تسجيل الدخول", "Sign in")}</a>
     ${isStandalone() ? "" : `<button class="nav" data-act="install-app">${ICON.download}${L("تثبيت التطبيق", "Install the app")}</button>`}
     <button class="nav" data-act="theme">${ICON.moon}${L("الوضع الليلي / النهاري", "Dark / light")}</button>
     <button class="nav" data-act="lang">${ICON.globe}${L("English", "العربية")}</button>
@@ -594,6 +597,7 @@ function saveAll(){
   write(KEY + "-notes", notes); write(KEY + "-profile", profile);
   write(KEY + "-ads", ads); write(KEY + "-ads-feed", feedUrl);
   write(KEY + "-symbols", customSyms);
+  schedulePush();
 }
 
 // Screenshots live in IndexedDB because localStorage is too small for images
@@ -1535,7 +1539,7 @@ function renderImgs(){
   $("imgs").innerHTML = draft.images.map(id => `<div class="thumb"><img data-img="${id}" data-act="zoom" alt=""><button type="button" data-act="rm-img" data-id="${id}">✕</button></div>`).join("");
   hydrate($("imgs"));
 }
-function hydrate(root){ root.querySelectorAll("img[data-img]").forEach(async im => { try{ im.src = await idb.get(im.dataset.img) || ""; }catch(e){} }); }
+function hydrate(root){ root.querySelectorAll("img[data-img]").forEach(async im => { try{ im.src = await idb.get(im.dataset.img) || await cloudImage(im.dataset.img); }catch(e){} }); }
 function compress(file){
   return new Promise(res => {
     const img = new Image();
@@ -1759,7 +1763,7 @@ const OWNER_EMAIL = "trederman640@gmail.com";
 const FB_SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 let fb = null, fbUser = null, fbState = "loading", myRequest = undefined, allRequests = [], reqLoaded = false;
 let unsubMine = null, unsubAll = null, adminTab = "pending", reRequest = false, ownerStatus = "", ownerBusy = false;
-const isOwner = () => !!fbUser && fbUser.email === OWNER_EMAIL;
+const isOwner = () => !!fbUser && fbUser.email === OWNER_EMAIL && fbUser.emailVerified;
 
 async function initFirebase(){
   try{
@@ -1785,6 +1789,8 @@ async function onUser(user){
   }
   fbState = "ready";
   write(KEY + "-was-owner", isOwner());
+  stopSync();
+  if(!user.isAnonymous) startSync(user);
   if(isOwner()){
     reqLoaded = false;
     unsubAll = fb.onSnapshot(fb.query(fb.collection(fb.db, "requests"), fb.orderBy("createdAt", "desc")), snap => {
@@ -1797,7 +1803,7 @@ async function onUser(user){
       if(/^#(ads|owner)/.test(location.hash)) route();
     });
   }else{
-    unsubMine = fb.onSnapshot(fb.doc(fb.db, "requests", user.uid), d => {
+    unsubMine = fb.onSnapshot(fb.doc(fb.db, "requests", user.uid), {includeMetadataChanges: true}, d => {
       // Offline, a missing cached copy says nothing about the request: keep the last known access
       if(d.metadata.fromCache && !d.exists()) return;
       myRequest = d.exists() ? d.data() : null;
@@ -2007,7 +2013,7 @@ pages.access = () => {
       <label>${L("اسمك", "Your name")}<input id="reqName" maxlength="40" value="${esc(myRequest?.name || profile?.name || "")}" placeholder="${L("مثال: أحمد", "e.g. Alex")}"></label>
       <label>${L("حسابك في تيليجرام أو إنستغرام (اختياري)", "Your Telegram or Instagram (optional)")}<input id="reqContact" class="ltr" maxlength="60" value="${esc(myRequest?.contact || "")}" placeholder="@username"></label>
       <div class="gmailrow">${gmail ? `<span>✓ ${L("مسجّل بـ", "Signed in as")} <b class="ltr">${esc(gmail)}</b></span>`
-        : `<button class="btn ghost sm" data-act="user-gmail">${L("سجّل بجيميل (اختياري)", "Sign in with Gmail (optional)")}</button>`}</div>
+        : `<a class="btn ghost sm" href="#account">${L("أنشئ حساباً لتجد بياناتك على أي جهاز", "Create an account to find your data on any device")}</a>`}</div>
     </div>
     ${code}
     <button class="btn big-btn" data-act="request-access">${ICON.lock}${L("اطلب الإذن", "Request access")}</button>
@@ -2038,6 +2044,7 @@ Object.assign(actions, {
     catch(e){
       const cred = fb.GoogleAuthProvider.credentialFromError(e);
       if(cred) await fb.signInWithCredential(fb.auth, cred).catch(() => {});
+      else { accountMsg = `<span class="neg">${authErr(e)}</span>`; route(); }
     }
   },
   "owner-login": async () => {
@@ -2051,7 +2058,7 @@ Object.assign(actions, {
     }catch(e){ ownerStatus = `<span class="neg">${L("لم يكتمل تسجيل الدخول.", "Sign-in was not completed.")}</span>`; }
     ownerBusy = false; route();
   },
-  "owner-logout": async () => { await fb.signOut(fb.auth); write(KEY + "-was-owner", false); location.hash = "dashboard"; },
+  "owner-logout": el => actions["acc-logout"](el),
   "admin-tab": el => { adminTab = el.dataset.tab; route(); },
   "req-approve": el => fb.updateDoc(fb.doc(fb.db, "requests", el.dataset.uid), {status: "approved", decidedAt: fb.serverTimestamp()}),
   "req-reject": el => fb.updateDoc(fb.doc(fb.db, "requests", el.dataset.uid), {status: "rejected", decidedAt: fb.serverTimestamp()}),
@@ -2087,7 +2094,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2123,6 +2130,259 @@ document.addEventListener("change", async e => {
   if(e.target.id !== "setAvIn" || !e.target.files[0]) return;
   profile = {...(profile || {}), avatar: await squareAvatar(e.target.files[0])};
   saveAll(); applyLang(); route();
+});
+
+/* ---------- accounts and cloud sync ---------- */
+// Signed-in users keep their journal in Firestore under users/<uid>, so any device shows the same data. Only that
+// account can read or write it (see the rules). Guests stay local-only. Each record is compared by hash with what
+// was last synced: a change on this device is pushed, a change elsewhere is pulled, and a record changed on both
+// keeps this device's version. localStorage stays the working copy, so the app still opens offline.
+const canon = v => Array.isArray(v) ? "[" + v.map(canon).join(",") + "]"
+  : v && typeof v === "object" ? "{" + Object.keys(v).sort().filter(k => v[k] !== undefined).map(k => JSON.stringify(k) + ":" + canon(v[k])).join(",") + "}" : JSON.stringify(v ?? null);
+const hashOf = v => { const s = canon(v); let h = 5381; for(let i = 0; i < s.length; i++) h = (h * 33 ^ s.charCodeAt(i)) >>> 0; return h.toString(36) + "." + s.length; };
+const SYNC_KINDS = {
+  trades: {get: () => trades, set: v => { trades = v; }},
+  playbooks: {get: () => playbooks, set: v => { playbooks = v; }},
+  notes: {get: () => notes, set: v => { notes = v; }},
+  days: {get: () => Object.entries(days).map(([id, d]) => ({...d, id})), set: v => { days = Object.fromEntries(v.map(({id, ...d}) => [id, d])); }}
+};
+let syncUser = null, syncUnsubs = [], syncMap = {}, syncPending = new Set(), syncState = "off", syncTimer = null, syncRunning = false, syncAgain = false;
+const clean = v => JSON.parse(JSON.stringify(v));
+const metaOf = () => ({profile: profile || null, customSyms});
+const userDoc = (...path) => fb.doc(fb.db, "users", syncUser.uid, ...path);
+const saveMap = () => write(KEY + "-sync-map", syncMap);
+function setSyncState(s){ syncState = s; if($("syncNote")) $("syncNote").textContent = syncLabel(); }
+const syncLabel = () => ({syncing: L("جارٍ المزامنة...", "Syncing..."), ok: L("✓ محفوظ في حسابك", "✓ Saved to your account"), error: L("تعذّرت المزامنة، سنعيد المحاولة", "Sync failed, will retry"), off: L("محفوظ على هذا الجهاز فقط", "Saved on this device only")})[syncState];
+
+function stopSync(){ syncUnsubs.forEach(u => u()); syncUnsubs = []; syncUser = null; clearTimeout(syncTimer); setSyncState("off"); }
+// Removes this account's journal from the device (other accounts must never see it)
+function clearLocal(){
+  trades.forEach(t => tradeImgIds(t).forEach(id => idb.del(id).catch(() => {})));
+  trades = []; playbooks = []; days = {}; notes = []; customSyms = []; profile = null; syncMap = {};
+  saveAll();
+  ["-profile", "-sync-map", "-sync-uid", "-access-ok"].forEach(k => { try{ localStorage.removeItem(KEY + k); }catch(e){} });
+}
+function startSync(user){
+  const owner = read(KEY + "-sync-uid", null);
+  if(owner && owner !== user.uid) clearLocal();
+  write(KEY + "-sync-uid", user.uid);
+  syncUser = user; syncMap = read(KEY + "-sync-map", {});
+  syncPending = new Set([...Object.keys(SYNC_KINDS), "meta"]);
+  setSyncState("syncing");
+  // Metadata changes are needed: cached answers are skipped, and the later server answer may differ only in metadata
+  const live = {includeMetadataChanges: true};
+  Object.keys(SYNC_KINDS).forEach(kind => syncUnsubs.push(fb.onSnapshot(fb.collection(fb.db, "users", user.uid, kind), live, snap => onKindSnap(kind, snap), syncFailed)));
+  syncUnsubs.push(fb.onSnapshot(userDoc("meta", "state"), live, onMetaSnap, syncFailed));
+}
+function syncFailed(){ setSyncState("error"); }
+function pulled(kind){
+  saveMap();
+  // Pushing waits until every first answer has arrived, so nothing older overwrites the account
+  if(syncPending.delete(kind) && !syncPending.size) schedulePush(0);
+}
+function refreshAfterPull(){
+  saveAll();
+  applyLang();
+  // Don't redraw under someone who is typing on the page
+  if(!["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) route();
+}
+function onKindSnap(kind, snap){
+  if(snap.metadata.fromCache) return; // an offline answer says nothing about what the account holds
+  const k = SYNC_KINDS[kind], list = k.get(), map = syncMap[kind] = syncMap[kind] || {}, seen = new Set();
+  let changed = false;
+  snap.docs.forEach(d => {
+    const remote = {...d.data(), id: d.id}, hr = hashOf(remote), i = list.findIndex(x => x.id === d.id);
+    seen.add(d.id);
+    // Remember this trade's cloud images so deleting the trade here also removes them
+    if(kind === "trades"){ syncMap.images = syncMap.images || {}; tradeImgIds(remote).forEach(id => { syncMap.images[id] = 1; }); }
+    if(i < 0){
+      if(map[d.id] !== hr){ list.push(remote); map[d.id] = hr; changed = true; } // the same hash means it was deleted here and awaits push
+      return;
+    }
+    const hl = hashOf(list[i]);
+    if(hl === hr){ map[d.id] = hr; return; }
+    if(hl === map[d.id]){
+      // Update in place: an open trade form keeps a reference to this object
+      Object.keys(list[i]).forEach(key => delete list[i][key]); Object.assign(list[i], remote);
+      map[d.id] = hr; changed = true;
+    }
+  });
+  Object.keys(map).forEach(id => {
+    if(seen.has(id)) return;
+    const i = list.findIndex(x => x.id === id);
+    if(i >= 0 && hashOf(list[i]) === map[id]){ list.splice(i, 1); changed = true; delete map[id]; }
+    else if(i < 0) delete map[id];
+  });
+  k.set(list);
+  if(changed) refreshAfterPull();
+  pulled(kind);
+}
+function onMetaSnap(d){
+  if(d.metadata.fromCache) return;
+  const remote = d.exists() ? d.data() : null, firstPull = syncPending.has("meta");
+  if(remote){
+    const hr = hashOf({profile: remote.profile || null, customSyms: remote.customSyms || []}), hl = hashOf(metaOf());
+    if(hl === hr) syncMap.meta = hr;
+    else if(hl === syncMap.meta || !profile){
+      profile = remote.profile || null; customSyms = remote.customSyms || []; syncMap.meta = hr;
+      if(profile) $("onboard").classList.remove("show");
+      refreshAfterPull();
+    }
+  }else if(firstPull && !profile && location.hash !== "#account") showOnboarding();
+  pulled("meta");
+}
+function schedulePush(delay = 1500){
+  if(!syncUser) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(pushNow, delay);
+}
+async function pushNow(){
+  if(!syncUser || syncPending.size) return;
+  if(syncRunning){ syncAgain = true; return; }
+  syncRunning = true; setSyncState("syncing");
+  try{
+    const ops = [], applied = [];
+    for(const [kind, k] of Object.entries(SYNC_KINDS)){
+      const map = syncMap[kind] = syncMap[kind] || {}, list = k.get(), ids = new Set();
+      list.forEach(item => {
+        if(!item.id) return;
+        ids.add(item.id);
+        const data = clean(item), h = hashOf(data);
+        if(map[item.id] !== h){ ops.push(b => b.set(userDoc(kind, item.id), data)); applied.push(() => { map[item.id] = h; }); }
+      });
+      Object.keys(map).forEach(id => { if(!ids.has(id)){ ops.push(b => b.delete(userDoc(kind, id))); applied.push(() => { delete map[id]; }); } });
+    }
+    if(profile){
+      const meta = clean(metaOf()), h = hashOf(meta);
+      if(syncMap.meta !== h){ ops.push(b => b.set(userDoc("meta", "state"), meta)); applied.push(() => { syncMap.meta = h; }); }
+    }
+    for(let i = 0; i < ops.length; i += 400){
+      const batch = fb.writeBatch(fb.db);
+      ops.slice(i, i + 400).forEach(op => op(batch));
+      await batch.commit();
+    }
+    applied.forEach(f => f()); saveMap();
+    await pushImages();
+    setSyncState("ok");
+  }catch(e){
+    setSyncState("error");
+    clearTimeout(syncTimer); syncTimer = setTimeout(pushNow, 60000);
+  }
+  syncRunning = false;
+  if(syncAgain){ syncAgain = false; schedulePush(); }
+}
+// Screenshots go up as smaller copies, one document each (Firestore documents are limited to 1 MB)
+function cloudCopy(data){
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onerror = rej;
+    img.onload = () => {
+      let size = 1200, out = data;
+      do {
+        const sc = Math.min(1, size / Math.max(img.width, img.height)), c = document.createElement("canvas");
+        c.width = img.width * sc; c.height = img.height * sc; c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+        out = c.toDataURL("image/jpeg", .7); size = Math.round(size * .75);
+      } while(out.length > 900000 && size > 300);
+      res(out);
+    };
+    img.src = data;
+  });
+}
+async function pushImages(){
+  const map = syncMap.images = syncMap.images || {}, used = new Set(trades.flatMap(tradeImgIds));
+  for(const id of used){
+    if(map[id]) continue;
+    const data = await idb.get(id);
+    if(!data) continue; // uploaded from another device; fetched when it is shown
+    await fb.setDoc(userDoc("images", id), {data: await cloudCopy(data)});
+    map[id] = 1; saveMap();
+  }
+  for(const id of Object.keys(map)){
+    if(!used.has(id)){ await fb.deleteDoc(userDoc("images", id)); delete map[id]; saveMap(); }
+  }
+}
+async function cloudImage(id){
+  if(!syncUser) return "";
+  const d = await fb.getDoc(userDoc("images", id));
+  if(!d.exists()) return "";
+  const data = d.data().data;
+  if(!/^data:image\/jpeg;base64,/.test(data)) return "";
+  await idb.put(id, data);
+  syncMap.images = syncMap.images || {}; syncMap.images[id] = 1; saveMap();
+  return data;
+}
+
+/* ---------- account page ---------- */
+const authErr = e => ({
+  "auth/email-already-in-use": L("هذا الإيميل له حساب من قبل. جرّب تسجيل الدخول.", "This email already has an account. Try signing in."),
+  "auth/credential-already-in-use": L("هذا الإيميل له حساب من قبل. جرّب تسجيل الدخول.", "This email already has an account. Try signing in."),
+  "auth/invalid-credential": L("الإيميل أو كلمة المرور غير صحيحة.", "Wrong email or password."),
+  "auth/wrong-password": L("الإيميل أو كلمة المرور غير صحيحة.", "Wrong email or password."),
+  "auth/user-not-found": L("الإيميل أو كلمة المرور غير صحيحة.", "Wrong email or password."),
+  "auth/invalid-email": L("الإيميل غير صحيح.", "That email isn't valid."),
+  "auth/weak-password": L("كلمة المرور يجب أن تكون 6 أحرف على الأقل.", "The password must be at least 6 characters."),
+  "auth/too-many-requests": L("محاولات كثيرة. حاول بعد قليل.", "Too many attempts. Try again shortly."),
+  "auth/network-request-failed": L("لا يوجد اتصال بالإنترنت.", "No internet connection."),
+  "auth/popup-closed-by-user": L("أُغلقت نافذة تسجيل الدخول.", "The sign-in window was closed."),
+  "auth/popup-blocked": L("المتصفح منع نافذة تسجيل الدخول. جرّب الإيميل وكلمة المرور.", "The browser blocked the sign-in window. Try email and password.")
+})[e?.code] || L("لم يكتمل تسجيل الدخول، حاول مرة أخرى.", "Sign-in didn't complete, try again.");
+let accountMsg = "", accountMode = "signup";
+const signedIn = () => !!fbUser && !fbUser.isAnonymous;
+pages.account = () => {
+  const msg = accountMsg ? `<p class="hint" style="font-size:13px">${accountMsg}</p>` : "";
+  if(signedIn()) return { html: `<div class="panel gate"><div class="gate-ic ok">✓</div><h1>${L("حسابي", "My account")}</h1>
+    <p class="ltr"><b>${esc(fbUser.email || "")}</b></p>
+    <span class="live"><i></i><span id="syncNote">${syncLabel()}</span></span>
+    <p class="muted">${L("صفقاتك وملاحظاتك وصورك محفوظة في حسابك. سجّل الدخول من أي جهاز لتجدها.", "Your trades, notes and images are saved to your account. Sign in on any device to find them.")}</p>
+    <button class="btn ghost" data-act="acc-logout">${L("تسجيل الخروج", "Sign out")}</button>${msg}</div>` };
+  const signup = accountMode === "signup";
+  return { html: `<div class="panel gate"><div class="gate-ic">${ICON.lock}</div>
+    <h1>${signup ? L("أنشئ حسابك", "Create your account") : L("سجّل الدخول", "Sign in")}</h1>
+    <p class="muted">${L("بحسابك تجد كل معلوماتك على أي جهاز، حتى لو غيّرت هاتفك. بدون حساب تبقى البيانات على هذا الجهاز فقط.", "With an account you find everything on any device, even a new phone. Without one, data stays on this device only.")}</p>
+    <button class="btn block" data-act="user-gmail" ${fbState !== "ready" ? "disabled" : ""}>${L("المتابعة بحساب Google", "Continue with Google")}</button>
+    <div class="gate-form">
+      <label>${L("الإيميل", "Email")}<input id="accEmail" class="ltr" type="email" autocomplete="email" maxlength="120"></label>
+      <label>${L("كلمة المرور", "Password")}<input id="accPass" class="ltr" type="password" autocomplete="${signup ? "new-password" : "current-password"}" maxlength="100"></label>
+    </div>
+    <button class="btn ghost block" data-act="${signup ? "acc-signup" : "acc-login"}" ${fbState !== "ready" ? "disabled" : ""}>${signup ? L("إنشاء حساب", "Create account") : L("دخول", "Sign in")}</button>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center">
+      <button class="linkbtn" data-act="acc-mode">${signup ? L("عندي حساب، تسجيل الدخول", "I have an account, sign in") : L("ليس عندي حساب، إنشاء حساب", "No account yet, create one")}</button>
+      ${signup ? "" : `<button class="linkbtn" data-act="acc-reset">${L("نسيت كلمة المرور", "Forgot password")}</button>`}</div>
+    ${msg}</div>` };
+};
+const accFields = () => ({email: $("accEmail").value.trim(), pass: $("accPass").value});
+Object.assign(actions, {
+  "acc-mode": () => { accountMode = accountMode === "signup" ? "login" : "signup"; accountMsg = ""; route(); },
+  "acc-signup": async () => {
+    const {email, pass} = accFields();
+    try{
+      // Linking keeps the guest's identity, so an approval already given stays valid
+      await fb.linkWithCredential(fbUser, fb.EmailAuthProvider.credential(email, pass));
+      await fb.auth.currentUser.reload(); accountMsg = ""; await onUser(fb.auth.currentUser);
+    }catch(e){ accountMsg = `<span class="neg">${authErr(e)}</span>`; route(); }
+  },
+  "acc-login": async () => {
+    const {email, pass} = accFields();
+    try{ accountMsg = ""; await fb.signInWithEmailAndPassword(fb.auth, email, pass); }
+    catch(e){ accountMsg = `<span class="neg">${authErr(e)}</span>`; route(); }
+  },
+  "acc-reset": async () => {
+    const {email} = accFields();
+    if(!email){ accountMsg = `<span class="neg">${L("اكتب إيميلك أولاً.", "Enter your email first.")}</span>`; route(); return; }
+    try{ await fb.sendPasswordResetEmail(fb.auth, email); accountMsg = L("إذا كان الإيميل مسجلاً، ستصلك رسالة لتغيير كلمة المرور.", "If that email has an account, a reset message is on its way."); }
+    catch(e){ accountMsg = `<span class="neg">${authErr(e)}</span>`; }
+    route();
+  },
+  "acc-logout": async () => {
+    if(!navigator.onLine) return alert(L("تحتاج اتصالاً بالإنترنت حتى تُحفظ بياناتك قبل الخروج.", "You need internet so your data is saved before signing out."));
+    clearTimeout(syncTimer);
+    await Promise.race([pushNow(), new Promise(r => setTimeout(r, 15000))]);
+    if(syncState !== "ok" && !confirm(L("لم تكتمل المزامنة، وقد تضيع آخر التغييرات. هل تخرج رغم ذلك؟", "Sync didn't finish and recent changes may be lost. Sign out anyway?"))) return;
+    stopSync(); clearLocal(); write(KEY + "-was-owner", false);
+    await fb.signOut(fb.auth);
+    location.hash = ""; location.reload();
+  },
+  "ob-login": () => { $("onboard").classList.remove("show"); accountMode = "login"; location.hash = "account"; }
 });
 
 /* ---------- installable app ---------- */
@@ -2217,7 +2477,8 @@ function renderOb(){
       <label>${L("رصيد الحساب الابتدائي ($)", "Starting account balance ($)")}<input id="obBal" type="number" step="any" value="${esc(obDraft.balance || "")}" placeholder="${L("مثال: 1000", "e.g. 1000")}"></label>
       <label>${L("هدف الربح الشهري (%)", "Monthly profit goal (%)")}<input id="obGoal" type="number" step="any" value="${esc(obDraft.goal || "")}" placeholder="${L("مثال: 5", "e.g. 5")}"></label>`;
   }
-  html += `<div class="ob-nav">${obStep ? `<button class="btn ghost" id="obBack">${L("رجوع", "Back")}</button>` : ""}
+  if(!obStep && !profile) html += `<button class="linkbtn" data-act="ob-login" style="align-self:center">${L("عندي حساب، تسجيل الدخول", "I have an account, sign in")}</button>`;
+  html += `<div class="ob-nav">${obStep ?`<button class="btn ghost" id="obBack">${L("رجوع", "Back")}</button>` : ""}
     <button class="btn" id="obNext">${obStep === steps.length - 1 ? L("ابدأ الآن 🚀", "Get started 🚀") : L("متابعة", "Continue")}</button></div>`;
   $("obBody").innerHTML = html;
   if($("obAvBtn")){
