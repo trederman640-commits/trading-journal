@@ -452,7 +452,7 @@ h1.ov{font-size:32px;font-weight:500;letter-spacing:-.025em}
 }
 @media (max-width:900px){
   .app{grid-template-columns:1fr}
-  .side{margin:0;border-radius:0;position:sticky;top:0;z-index:10;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:8px;border:0;border-bottom:1px solid var(--line)}
+  .side{margin:0;border-radius:0;position:sticky;top:0;z-index:10;height:auto;min-height:0;flex-direction:row;align-items:center;overflow-x:auto;padding:8px;border:0;border-bottom:1px solid var(--line)}
   .side .logo,.side .ws,.side .sec,.side .spacer,.side .tip,#sideNt{display:none}
   .side .socials{display:none}
   .float-nt{inset-inline:12px;bottom:12px;width:auto}
@@ -888,6 +888,7 @@ function halfGauge(c, ratio){
   animate(p => {
     const {ctx, w, h} = setup(c);
     const cx = w / 2, cy = h - 4, R = Math.min(w / 2, h) - 10, col = pnlColor(ratio);
+    if(R <= 0) return; // the goal gauge is hidden on phones, so its canvas has no size
     ctx.lineCap = "round"; ctx.lineWidth = 9;
     ctx.strokeStyle = hexA(cv("--muted"), .22); ctx.beginPath(); ctx.arc(cx, cy, R, Math.PI, Math.PI * 2); ctx.stroke();
     const r = Math.max(0, Math.min(1, ratio)) * p;
@@ -2105,7 +2106,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
