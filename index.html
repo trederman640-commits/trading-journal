@@ -351,7 +351,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink)}
 .thumb img{width:100%;height:100%;object-fit:cover;cursor:zoom-in}
 .thumb button{position:absolute;top:4px;inset-inline-end:4px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;width:22px;height:22px;padding:0}
 .drop{border:1.5px dashed var(--line);border-radius:16px;padding:16px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer;background:var(--soft)}
-.actions{grid-column:1/-1;display:flex;gap:8px;margin-top:4px}
+.actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .actions .btn.danger{margin-inline-end:auto}
 .hint{font-size:12px;color:var(--muted)}
 #lightbox{max-width:95vw;background:transparent;border:0;box-shadow:none}
@@ -1357,9 +1357,10 @@ let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTime
 
 /* ---------- trade dialog ---------- */
 let editing = null, draft = null, origImgs = [], newImgs = [], committed = false;
-function openTrade(t, day){
+// preset: setup fields copied from another trade ("Copy as new trade")
+function openTrade(t, day, preset){
   editing = t || null; committed = false;
-  draft = t ? {...t} : {date: day || today(), time: new Date().toTimeString().slice(0, 5), side: "buy", rating: 0};
+  draft = t ? {...t} : {date: day || today(), time: new Date().toTimeString().slice(0, 5), side: "buy", rating: 0, ...(preset || {})};
   draft.images = [...(draft.images || [])]; draft.mistakes = [...(draft.mistakes || [])]; draft.rules = [...(draft.rules || [])];
   // Older trades were priced by entry/exit; convert them to an outcome + amount when edited
   if(t && !draft.outcome){
@@ -1398,7 +1399,8 @@ function openTrade(t, day){
     <div class="full"><div class="hint" style="margin-bottom:6px">${L("صور إضافية (اختياري)", "Extra images (optional)")}</div><div class="imgs" id="imgs"></div>
       <div class="drop" id="drop" style="margin-top:8px">+ ${L("أضف صوراً إضافية", "Add more images")}</div>
       <input type="file" id="imgInput" accept="image/*" multiple hidden></div>
-    <div class="actions">${t ? `<button type="button" class="btn danger" data-act="del-trade">${L("حذف", "Delete")}</button>` : ""}
+    <div class="actions">${t ? `<button type="button" class="btn danger" data-act="del-trade">${L("حذف", "Delete")}</button>
+      <button type="button" class="btn ghost" data-act="copy-trade" title="${L("صفقة جديدة بنفس الأصل والاتجاه والحجم والاستراتيجية", "A new trade with the same symbol, side, size and playbook")}">${L("نسخ كصفقة جديدة", "Copy as new trade")}</button>` : ""}
       <button type="button" class="btn ghost" data-act="close-trade">${L("إلغاء", "Cancel")}</button><button type="submit" class="btn">${L("حفظ الصفقة", "Save trade")}</button></div>`;
   activeSlot = null;
   renderStars(); renderMistakes(); renderRules(); renderImgs(); renderOutcome(); renderExit(); renderShots();
@@ -1623,6 +1625,15 @@ const actions = {
   "add-trade": el => { if(!hasAccess()){ location.hash = "access"; return; } openTrade(null, el.dataset.day); },
   "edit-trade": el => openTrade(trades.find(t => t.id === el.dataset.id)),
   "close-trade": () => $("tradeDlg").close(),
+  // Starts a new trade with the saved trade's setup; result, notes and images are left for the new trade
+  "copy-trade": () => {
+    if(!editing) return;
+    const src = editing, preset = {};
+    ["symbol", "side", "size", "fees", "strategy"].forEach(k => { if(src[k] != null && src[k] !== "") preset[k] = src[k]; });
+    if(!committed) newImgs.forEach(id => idb.del(id));
+    committed = true; $("tradeDlg").close();
+    openTrade(null, null, preset);
+  },
   "del-trade": () => {
     if(!confirm(L("حذف هذه الصفقة؟", "Delete this trade?"))) return;
     tradeImgIds(editing).forEach(id => idb.del(id)); newImgs.forEach(id => idb.del(id));
@@ -2112,7 +2123,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
