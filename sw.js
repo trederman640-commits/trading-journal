@@ -1,6 +1,6 @@
 // Lets the installed app open without internet. The app's own files are network-first, so updates still arrive
 // as soon as the user is online; user data is never touched here (it lives in localStorage and IndexedDB).
-const CACHE = "itachi-journaling-v1";
+const CACHE = "itachi-journaling-v2"; // v2 clears the extra "?v=" copies that v1 kept
 const SHELL = ["./", "manifest.json", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png"];
 const PINNED_HOSTS = ["www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com"];
 
@@ -30,7 +30,9 @@ async function networkFirst(req){
     const fresh = new URL(req.url);
     fresh.searchParams.set("_", Date.now());
     const res = await fetch(fresh, {cache: "no-store"});
-    if(res.ok) cache.put(req.url, res.clone());
+    // Cached without the query (e.g. "?v=..." after an update), so each update replaces the old copy instead of adding one
+    const key = new URL(req.url); key.search = "";
+    if(res.ok) cache.put(key.href, res.clone());
     return res;
   }catch(err){
     const hit = await cache.match(req.url, {ignoreSearch: true}) || (req.mode === "navigate" ? await cache.match("./") : null);
