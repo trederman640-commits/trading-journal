@@ -1345,8 +1345,8 @@ function route(){
   BI = balanceInfo();
   let [page, param] = (location.hash.slice(1) || "dashboard").split("/");
   if(!pages[page]) page = "dashboard";
-  // Locked features show the access request page until the owner approves this device
-  if(!hasAccess() && LOCKED_PAGES.includes(page)) page = "access";
+  // Old links to the request page (shared before v15) open the dashboard
+  if(page === "access") page = "dashboard";
   const fn = pages[page];
   document.querySelectorAll(".nav[data-page]").forEach(a => a.classList.toggle("on", a.dataset.page === page));
   const v = fn(param);
@@ -2005,11 +2005,11 @@ $("ntForm").addEventListener("submit", e => {
 });
 
 /* ---------- access approval (users) ---------- */
-// The journal's features stay locked until the owner approves this user's request.
-// This is a soft lock for a client-side app, not a security boundary: trades never leave the user's browser.
+// Since v15 the journal is open to everyone: no request or approval is needed. The request code below is kept
+// only so the owner's admin page can still show past requests.
 const LOCKED_PAGES = ["dashboard", "daily", "trades", "calendar", "reports", "playbooks", "notebook"];
 let deviceId = "", accessOk = false;
-const hasAccess = () => isOwner() || accessOk || (fbState === "loading" && !!read(KEY + "-was-owner", false));
+const hasAccess = () => true;
 function initAccess(){
   deviceId = read(KEY + "-device", "");
   if(!/^ITA-[A-Z0-9]{6}$/.test(deviceId)){
@@ -2129,7 +2129,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
