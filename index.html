@@ -426,11 +426,11 @@ h1.ov{font-size:32px;font-weight:500;letter-spacing:-.025em}
 .cfoot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:12px;flex-wrap:wrap}
 .cfoot small{display:block;color:var(--muted);font-size:12px;margin-bottom:2px}
 .cfoot b{font-size:19px;font-weight:500}
-.asset{display:grid;grid-template-columns:30px minmax(0,1fr) 84px auto;gap:10px;align-items:center;padding:7px 0}
+.asset{display:grid;grid-template-columns:30px minmax(60px,1fr) minmax(0,84px) auto;gap:10px;align-items:center;padding:7px 0}
 .asset .ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--ink);background:var(--soft);border:1px solid var(--line)}
 .asset .nm{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .asset .nm small{display:block;color:var(--muted);font-size:11px}
-.asset canvas{height:28px;width:84px}
+.asset canvas{height:28px;width:100%;min-width:0}
 .asset b{font-size:13px;font-weight:600}
 .row3{display:grid;gap:16px;grid-template-columns:repeat(3,minmax(0,1fr))}
 
@@ -1215,6 +1215,7 @@ pages.reports = () => {
       [L("عدد الصفقات المغلقة","Closed trades"), s.closed.length], [L("الصفقات المفتوحة","Open trades"), s.open], [L("نسبة النجاح","Win rate"), pct(s.wr)],
       [L("معامل الربح","Profit factor"), pf(s.pf)], [L("المتوقع لكل صفقة","Expectancy"), money(s.expectancy), cls(s.expectancy)],
       [L("متوسط الصفقة الرابحة","Avg winner"), money(s.avgW), "pos"], [L("متوسط الصفقة الخاسرة","Avg loser"), money(-s.avgL), "neg"],
+      [L("نسبة متوسط الربح إلى الخسارة","Avg win / avg loss"), s.ratio === null ? "—" : s.ratio.toFixed(2)],
       [L("أفضل صفقة","Best trade"), money(s.best), "pos"], [L("أسوأ صفقة","Worst trade"), money(s.worst), "neg"], [L("متوسط R","Avg R"), s.avgR === null ? "—" : s.avgR.toFixed(2) + "R"],
       [L("أقصى تراجع","Max drawdown"), money(-s.maxDD), "neg"], [L("أطول سلسلة أرباح","Longest win streak"), s.maxWinStreak], [L("أطول سلسلة خسائر","Longest loss streak"), s.maxLossStreak],
       [L("أيام التداول","Trading days"), s.tradingDays], [L("نسبة الأيام الرابحة","Day win %"), pct(s.dayWr)], [L("أفضل يوم","Best day"), money(s.bestDay), "pos"], [L("أسوأ يوم","Worst day"), money(s.worstDay), "neg"],
@@ -2128,7 +2129,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
