@@ -618,7 +618,8 @@
     chat.msgs.push({role: "user", content: q}, {role: "assistant", content: ""}); chat.busy = true; renderChat();
     thinking(true);
     const F = typeof coachFacts === "function" ? coachFacts() : null;
-    const facts = F ? F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n") : T("- ليس لدى المتداول صفقات كافية بعد (أقل من 5).", "- Not enough closed trades yet (fewer than 5).");
+    const facts = (F ? F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n") : T("- ليس لدى المتداول صفقات كافية بعد (أقل من 5).", "- Not enough closed trades yet (fewer than 5)."))
+      + (typeof aiTradeData === "function" ? "\n\n" + aiTradeData() + "\n" + T("يمكنك الإجابة عن أي سؤال حول هذه الصفقات (أيام، أشهر، أرباع، أخطاء متكررة، أصول، أوقات). اعتمد على المجاميع الجاهزة واذكر التواريخ والأرقام.", "You can answer any question about these trades (days, months, quarters, repeated mistakes, symbols, times). Rely on the given totals and cite dates and numbers.") : "");
     const md = typeof days === "object" && days[today()]?.mood;
     const sys = `${cur?.persona || ""}\n${T("هذه الحقائق محسوبة من صفقات المتداول:", "Facts computed from the trader's trades:")}\n${facts}\n${md ? T("إحساس المتداول اليوم: ", "Trader's mood today: ") + md.feel + (md.note ? " — " + md.note : "") : ""}\n` +
       T("القواعد: اكتب بالعربية الفصحى البسيطة وبجمل قصيرة (3 إلى 5 جمل). إذا كتب لك المستخدم بالدارجة أو بأي لغة أخرى فأجبه بنفس لغته. استعمل الأرقام المعطاة فقط. لا توصيات شراء أو بيع ولا توقعات أسعار. ركّز على السلوك والانضباط وإدارة المخاطر.",
