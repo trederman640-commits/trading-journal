@@ -282,7 +282,12 @@ tbody tr.click:hover{background:var(--soft)}
 .aizout{max-width:680px;margin:0 auto;text-align:start}
 .aizsub{max-width:660px;margin:34px auto 0;color:var(--muted);font-size:15px;line-height:1.9}
 .aizsub b{color:var(--ink);font-weight:500}
-@media (max-width:700px){.aizhero{padding:36px 14px 30px}.aizsub{font-size:14px}}
+/* The section fills the screen and centres its content, so the page has no big empty area under it */
+.aizhero{min-height:calc(100vh - 32px);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:0;
+  background:radial-gradient(80% 45% at 50% 108%,color-mix(in srgb,var(--ink) 15%,transparent),transparent 72%),radial-gradient(60% 40% at 50% -10%,color-mix(in srgb,var(--ink) 5%,transparent),transparent 70%),var(--solid)}
+.aizhero > *{width:100%}
+.aizhero .aizpill{width:auto}
+@media (max-width:700px){.aizhero{padding:36px 14px 30px;min-height:calc(100vh - 90px)}.aizsub{font-size:14px}}
 
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.1fr);gap:6px}
@@ -2238,7 +2243,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 29;
+const APP_VERSION = 30;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2837,6 +2842,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=29" defer></script>
+<script src="mascot3d.js?v=30" defer></script>
 </body>
 </html>
