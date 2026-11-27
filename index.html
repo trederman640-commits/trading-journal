@@ -2213,7 +2213,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 26;
+const APP_VERSION = 27;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2367,7 +2367,7 @@ async function aiRun(q, isChat){
   const F = coachFacts();
   if(ai.state === "busy" || !F) return;
   const data = F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n");
-  const sys = L(`أنت "محلل إيتاشي"، مدرب أداء يساعد متداولاً على فهم نتائجه. هذه الحقائق محسوبة من صفقاته الحقيقية:\n${data}\n\nالقواعد: اكتب بالدارجة المغربية البسيطة (أو العربية البسيطة إذا كتب لك بها)، وبجمل قصيرة وواضحة. استعمل هذه الأرقام فقط ولا تخترع أرقاماً أو صفقات. لا تعطِ توصيات شراء أو بيع ولا توقعات للأسعار ولا إشارات تداول. ركّز على السلوك والانضباط وإدارة المخاطر. إذا لم تجد المعلومة في الحقائق فقل ذلك بصراحة.`,
+  const sys = L(`أنت "محلل إيتاشي"، مدرب أداء يساعد متداولاً على فهم نتائجه. هذه الحقائق محسوبة من صفقاته الحقيقية:\n${data}\n\nالقواعد: اكتب بالعربية الفصحى البسيطة، وإذا كتب لك المستخدم بالدارجة أو بأي لغة أخرى فأجبه بنفس لغته، وبجمل قصيرة وواضحة. استعمل هذه الأرقام فقط ولا تخترع أرقاماً أو صفقات. لا تعطِ توصيات شراء أو بيع ولا توقعات للأسعار ولا إشارات تداول. ركّز على السلوك والانضباط وإدارة المخاطر. إذا لم تجد المعلومة في الحقائق فقل ذلك بصراحة.`,
     `You are "Itachi Analyst", a performance coach helping a trader understand their results. These facts are computed from their real trades:\n${data}\n\nRules: write in simple, short, clear English. Use only these numbers and never invent numbers or trades. Never give buy or sell recommendations, price predictions or trading signals. Focus on behaviour, discipline and risk management. If the facts don't contain the answer, say so plainly.`);
   const history = isChat ? ai.chat.slice(-6).map(m => ({role: m.role === "user" ? "user" : "model", parts: [{text: m.content}]})) : [];
   if(isChat) ai.chat.push({role: "user", content: q}, {role: "assistant", content: ""});
@@ -2806,6 +2806,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=26" defer></script>
+<script src="mascot3d.js?v=27" defer></script>
 </body>
 </html>
