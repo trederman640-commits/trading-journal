@@ -657,7 +657,13 @@ const fmtDay = d => { const x = dObj(d), w = WEEKDAYS[lang][x.getDay()], m = MON
   return lang === "en" ? `${w}, ${m} ${x.getDate()}, ${x.getFullYear()}` : `${w} ${x.getDate()} ${m} ${x.getFullYear()}`; };
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const byTime = (a, b) => ((a.date || "") + (a.time || "")).localeCompare((b.date || "") + (b.time || "")) || a.id.localeCompare(b.id);
-const cv = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// Theme colours are read once and cached: charts ask for them hundreds of times, and each read forces a style
+// recalculation. The cache is cleared whenever the theme can change.
+const _cv = new Map();
+const cv = name => { let v = _cv.get(name); if(v === undefined){ v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); _cv.set(name, v); } return v; };
+window.cvReset = () => _cv.clear();
+new MutationObserver(() => _cv.clear()).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme", "data-m3theme", "class", "style"]});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => _cv.clear());
 const tradesWord = c => `${c} ${L("صفقة", c === 1 ? "trade" : "trades")}`;
 
 // Net P&L after fees; null while the trade is still open
@@ -754,8 +760,11 @@ function groupBy(list, keyFn){
 /* ---------- charts ---------- */
 function setup(c){
   const dpr = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
-  c.width = w * dpr; c.height = h * dpr;
+  // Resizing a canvas reallocates it, so only do it when the size really changed (animations redraw every frame)
+  if(c.width !== w * dpr || c.height !== h * dpr){ c.width = w * dpr; c.height = h * dpr; }
+  c.getContext("2d").setTransform(1, 0, 0, 1, 0, 0);
   const ctx = c.getContext("2d"); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, w, h);
+  ctx.shadowBlur = 0; ctx.globalAlpha = 1; ctx.setLineDash([]);   // the canvas is reused, so reset what the last frame left
   ctx.font = "11px IBM Plex Sans Arabic"; ctx.direction = "ltr"; return {ctx, w, h};
 }
 function emptyChart(ctx, w, h, msg){ ctx.fillStyle = cv("--muted"); ctx.font = "14px IBM Plex Sans Arabic"; ctx.textAlign = "center"; ctx.fillText(msg, w/2, h/2); }
@@ -782,6 +791,9 @@ function countUp(root){
   });
 }
 
+const lazyIO = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
+  if(e.isIntersecting){ lazyIO.unobserve(e.target); e.target.__draw && e.target.__draw(); }
+}), {rootMargin: "300px"}) : null;
 // Area chart; full-size charts draw in, show a hover tooltip and can pin it to the last point
 function lineChart(c, pts, opt = {}){
   if(!c) return;
@@ -815,7 +827,7 @@ function lineChart(c, pts, opt = {}){
       const g = ctx.createLinearGradient(0, padT, 0, h - padB); g.addColorStop(0, hexA(col, g0)); g.addColorStop(1, hexA(col, g1));
       ctx.fillStyle = g; ctx.fill();
       path(); ctx.strokeStyle = col; ctx.lineWidth = mini ? 1.6 : 2; ctx.lineJoin = "round";
-      if(opt.glow){ ctx.shadowColor = hexA(col, .85); ctx.shadowBlur = 14; }
+      if(opt.glow && prog >= 1){ ctx.shadowColor = hexA(col, .85); ctx.shadowBlur = 14; }   // the costly glow only on the final frame
       ctx.stroke(); ctx.restore();
     };
     if(opt.color) band(0, h, opt.color, alpha, 0);
@@ -837,7 +849,9 @@ function lineChart(c, pts, opt = {}){
     }
   };
   const rest = () => draw(opt.pin && pts.length > 1 ? pts.length - 1 : null);
-  if(opt.animate && !mini && pts.length > 1) animate(p => p < 1 ? draw(null, p) : rest(), 1200); else rest();
+  // Small charts (e.g. one per day) are drawn only when they scroll into view
+  if(mini && lazyIO){ c.__draw = rest; lazyIO.observe(c); }
+  else if(opt.animate && !mini && pts.length > 1) animate(p => p < 1 ? draw(null, p) : rest(), 1200); else rest();
   if(!mini && pts.length > 1){
     c.onmousemove = e => { const r = c.getBoundingClientRect(); draw(Math.max(0, Math.min(pts.length - 1, Math.round((e.clientX - r.left - Lm) / (r.width - Lm - R) * (pts.length - 1))))); };
     c.onmouseleave = rest;
@@ -859,7 +873,7 @@ function sparkline(c, pts, color, base){
       path(); ctx.lineTo(w, zy); ctx.lineTo(0, zy); ctx.closePath();
       const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, hexA(col, g0)); g.addColorStop(1, hexA(col, g1));
       ctx.fillStyle = g; ctx.fill();
-      path(); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.shadowColor = hexA(col, .8); ctx.shadowBlur = 8; ctx.stroke();
+      path(); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.shadowColor = hexA(col, .8); ctx.shadowBlur = prog < 1 ? 0 : 8; ctx.stroke();
       ctx.restore();
     };
     if(split){ band(0, zy, cv("--win"), .38, 0); band(zy, h, cv("--loss"), 0, .38); }
@@ -2145,7 +2159,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 19;
+const APP_VERSION = 20;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2738,6 +2752,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=19" defer></script>
+<script src="mascot3d.js?v=20" defer></script>
 </body>
 </html>
