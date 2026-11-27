@@ -2238,7 +2238,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 28;
+const APP_VERSION = 29;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2434,10 +2434,7 @@ pages.coach = () => {
         <p class="aizsub">${L("مساعد مصمَّم ليكون <b>رفيقك الشخصي</b> في التداول: يحلّل <b>أرقامك وأخطاءك وانضباطك</b> ويعطيك <b>خطوات عملية</b> لتحسين أدائك. تُرسَل الأرقام الملخّصة فقط وليس صفقاتك، والتحليل ليس نصيحة استثمارية.",
           "An assistant designed to be your <b>personal trading companion</b>: it analyses <b>your numbers, mistakes and discipline</b> and gives you <b>practical steps</b> to improve. Only summary numbers are sent, never your trades, and this is not investment advice.")}</p>
       </section>
-      ${!F ? "" : `
-      <div class="panel"><h2>${ICON.chart}${L("ما وجده المحلل في صفقاتك", "What the analyst found")}</h2>
-        <ul class="cfacts">${F.map(f => `<li class="${f.tone}">${f.txt}</li>`).join("")}</ul>
-        <p class="hint">${L("محسوبة مباشرة من صفقاتك المسجّلة.", "Computed directly from your logged trades.")}</p></div>`}`,
+`,   // the facts are still computed and sent to the AI, they are just no longer listed on the page
     after(){ if(F && AI_ON) renderAi(); }
   };
 };
@@ -2840,6 +2837,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=28" defer></script>
+<script src="mascot3d.js?v=29" defer></script>
 </body>
 </html>
