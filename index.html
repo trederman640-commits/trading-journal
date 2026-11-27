@@ -2243,7 +2243,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 31;
+const APP_VERSION = 32;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2397,12 +2397,48 @@ function renderAi(){
     </div>`;
   $("aiQ").onkeydown = e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); actions["ai-ask"](); } };
 }
+// Full trade data for the AI, so it can answer any question (per day, per quarter, repeated losses...).
+// Totals are computed here, because language models are unreliable at adding up long lists.
+function aiTradeData(){
+  const closed = trades.filter(t => pnl(t) !== null).sort(byTime);
+  if(!closed.length) return "";
+  const mk = k => { const m = MISTAKES.find(x => x[0] === k); return m ? L(m[1], m[2]) : k; };
+  const em = k => { const e = EMOTIONS.find(x => x[0] === k); return e ? L(e[2], e[3]) : (k || ""); };
+  const r2 = v => Math.round(v * 100) / 100, cut = (s, n) => String(s || "").replace(/\s+/g, " ").slice(0, n);
+  const group = keyFn => { const g = {};
+    for(const t of closed){ const k = keyFn(t), p = pnl(t), x = g[k] ||= {n: 0, net: 0, w: 0, lossCost: {}};
+      x.n++; x.net += p; if(p > 0) x.w++;
+      if(p < 0) for(const m of t.mistakes || []){ x.lossCost[mk(m)] = (x.lossCost[mk(m)] || 0) + p; } }
+    return Object.entries(g).map(([k, x]) => `${k} | ${x.n} | ${r2(x.net)} | ${Math.round(x.w / x.n * 100)}% | ` +
+      (Object.entries(x.lossCost).sort((a, b) => a[1] - b[1]).slice(0, 3).map(([m, c]) => `${m} ${r2(c)}`).join("; ") || "-")).join("\n"); };
+  const quarter = t => { const d = dObj(t.date); return `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`; };
+  const month = t => t.date.slice(0, 7);
+  const days30 = [...new Set(closed.map(t => t.date))].slice(-30);
+  const recent = closed.filter(t => days30.includes(t.date));
+  // How often each mistake appears in losing trades, and what it cost in total
+  const rep = {}; for(const t of closed) if(pnl(t) < 0) for(const m of t.mistakes || []){ const x = rep[mk(m)] ||= {n: 0, c: 0}; x.n++; x.c += pnl(t); }
+  const rows = closed.slice(-400).map(t => [t.date, t.time || "", t.symbol || "", t.side || "", r2(pnl(t)), rMultiple(t) == null ? "" : r2(rMultiple(t)),
+    cut(t.strategy, 24), (t.mistakes || []).map(mk).join("/"), em(t.emotion), t.rating || "", cut(t.exitType, 14), cut(t.notes, 90)].join(" | "));
+  const dayNotes = Object.keys(days).sort().slice(-40).filter(d => days[d]?.notes || days[d]?.mood)
+    .map(d => `${d}: ${cut(days[d].notes, 120)}${days[d].mood ? ` (${L("المزاج", "mood")}: ${days[d].mood.feel}${days[d].mood.note ? " - " + cut(days[d].mood.note, 60) : ""})` : ""}`);
+  return [
+    `${L("تاريخ اليوم", "Today")}: ${today()}${profile?.balance ? ` | ${L("رأس المال الابتدائي", "Starting balance")}: ${profile.balance}` : ""}`,
+    `\n## ${L("حسب الربع (الفترة | عدد | صافي | نسبة النجاح | أكثر الأخطاء كلفة في الخاسرة)", "By quarter (period | trades | net | win rate | costliest mistakes in losers)")}\n${group(quarter)}`,
+    `\n## ${L("حسب الشهر", "By month")}\n${group(month)}`,
+    `\n## ${L("آخر 30 يوم تداول حسب اليوم", "Last 30 trading days by day")}\n${(() => { const g = {}; recent.forEach(t => (g[t.date] ||= []).push(t)); return Object.entries(g).map(([d, ts]) =>
+      `${d} | ${ts.length} | ${r2(ts.reduce((a, t) => a + pnl(t), 0))} | ${[...new Set(ts.filter(t => pnl(t) < 0).flatMap(t => (t.mistakes || []).map(mk)))].join("/") || "-"}`).join("\n"); })()}`,
+    `\n## ${L("الأخطاء المتكررة في الصفقات الخاسرة (الخطأ: مرات، الكلفة)", "Repeated mistakes in losing trades (mistake: times, cost)")}\n${Object.entries(rep).sort((a, b) => a[1].c - b[1].c).map(([m, x]) => `${m}: ${x.n}, ${r2(x.c)}`).join("\n") || "-"}`,
+    `\n## ${L("كل الصفقات المغلقة", "All closed trades")} (${closed.length}${closed.length > 400 ? L("، آخر 400 معروضة", ", last 400 listed") : ""})\n${L("التاريخ | الوقت | الأصل | الاتجاه | الربح | R | الاستراتيجية | الأخطاء | الشعور | التقييم | نوع الخروج | ملاحظة", "date | time | symbol | side | pnl | R | strategy | mistakes | emotion | rating | exit | note")}\n${rows.join("\n")}`,
+    dayNotes.length ? `\n## ${L("ملاحظات الأيام", "Day notes")}\n${dayNotes.join("\n")}` : ""
+  ].join("\n");
+}
+window.aiTradeData = aiTradeData;
 async function aiRun(q, isChat){
   const F = coachFacts();
   if(ai.state === "busy" || !F) return;
-  const data = F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n");
-  const sys = L(`أنت "IZUMI EDGE AI"، مدرب أداء يساعد متداولاً على فهم نتائجه. هذه الحقائق محسوبة من صفقاته الحقيقية:\n${data}\n\nالقواعد: اكتب بالعربية الفصحى البسيطة، وإذا كتب لك المستخدم بالدارجة أو بأي لغة أخرى فأجبه بنفس لغته، وبجمل قصيرة وواضحة. استعمل هذه الأرقام فقط ولا تخترع أرقاماً أو صفقات. لا تعطِ توصيات شراء أو بيع ولا توقعات للأسعار ولا إشارات تداول. ركّز على السلوك والانضباط وإدارة المخاطر. إذا لم تجد المعلومة في الحقائق فقل ذلك بصراحة.`,
-    `You are "IZUMI EDGE AI", a performance coach helping a trader understand their results. These facts are computed from their real trades:\n${data}\n\nRules: write in simple, short, clear English. Use only these numbers and never invent numbers or trades. Never give buy or sell recommendations, price predictions or trading signals. Focus on behaviour, discipline and risk management. If the facts don't contain the answer, say so plainly.`);
+  const data = F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n") + "\n\n" + aiTradeData();
+  const sys = L(`أنت "IZUMI EDGE AI"، مدرب أداء يساعد متداولاً على فهم نتائجه. هذه حقائق وملخصات محسوبة من صفقاته الحقيقية، ثم كل صفقاته وملاحظاته:\n${data}\n\nالقواعد: اكتب بالعربية الفصحى البسيطة، وإذا كتب لك المستخدم بالدارجة أو بأي لغة أخرى فأجبه بنفس لغته، وبجمل قصيرة وواضحة. استعمل هذه البيانات فقط ولا تخترع أرقاماً أو صفقات. يمكنك الإجابة عن أي سؤال حول صفقاته: أيام معينة، أسباب الخسارة المتكررة، كل شهر أو ربع، الأصول، الأوقات، الاستراتيجيات. اعتمد على المجاميع الجاهزة بدل الحساب بنفسك، واذكر التواريخ والأرقام عند الإجابة. لا تعطِ توصيات شراء أو بيع ولا توقعات للأسعار ولا إشارات تداول. ركّز على السلوك والانضباط وإدارة المخاطر. إذا لم تجد المعلومة في الحقائق فقل ذلك بصراحة.`,
+    `You are "IZUMI EDGE AI", a performance coach helping a trader understand their results. These are facts and totals computed from their real trades, followed by all their trades and notes:\n${data}\n\nRules: write in simple, short, clear English. Use only this data and never invent numbers or trades. You can answer any question about their trades: specific days, repeated loss causes, each month or quarter, symbols, times, strategies. Rely on the given totals instead of adding up yourself, and cite dates and numbers. Never give buy or sell recommendations, price predictions or trading signals. Focus on behaviour, discipline and risk management. If the facts don't contain the answer, say so plainly.`);
   const history = isChat ? ai.chat.slice(-6).map(m => ({role: m.role === "user" ? "user" : "model", parts: [{text: m.content}]})) : [];
   if(isChat) ai.chat.push({role: "user", content: q}, {role: "assistant", content: ""});
   else { ai.reportOn = true; ai.report = ""; }
@@ -2436,8 +2472,8 @@ pages.coach = () => {
         <span class="aizpill">${ICON.spark}${L("محلّلك الذكي للتداول", "Your AI trading analyst")}</span>
         <h1 class="aiztitle">${L("<b>IZUMI EDGE AI</b> يقرأ صفقاتك<br>ويخبرك <b>بما يجب تغييره</b>", "<b>IZUMI EDGE AI</b> reads your trades<br>and tells you <b>what to change</b>")}</h1>
         ${!F ? `<div class="empty">${L("سجّل 5 صفقات مغلقة على الأقل ليبدأ المحلل بتحليل أدائك.", "Log at least 5 closed trades so the analyst can study your results.")}</div>` : AI_ON ? `<div id="aiBox"></div>` : ""}
-        <p class="aizsub">${L("مساعد مصمَّم ليكون <b>رفيقك الشخصي</b> في التداول: يحلّل <b>أرقامك وأخطاءك وانضباطك</b> ويعطيك <b>خطوات عملية</b> لتحسين أدائك. تُرسَل الأرقام الملخّصة فقط وليس صفقاتك، والتحليل ليس نصيحة استثمارية.",
-          "An assistant designed to be your <b>personal trading companion</b>: it analyses <b>your numbers, mistakes and discipline</b> and gives you <b>practical steps</b> to improve. Only summary numbers are sent, never your trades, and this is not investment advice.")}</p>
+        <p class="aizsub">${L("مساعد مصمَّم ليكون <b>رفيقك الشخصي</b> في التداول: يحلّل <b>أرقامك وأخطاءك وانضباطك</b> ويعطيك <b>خطوات عملية</b> لتحسين أدائك. عند السؤال تُرسَل بيانات صفقاتك وملاحظاتك (دون اسمك أو بريدك) إلى خدمة الذكاء الاصطناعي من Google لتحليلها، والتحليل ليس نصيحة استثمارية.",
+          "An assistant designed to be your <b>personal trading companion</b>: it analyses <b>your numbers, mistakes and discipline</b> and gives you <b>practical steps</b> to improve. When you ask, your trades and notes (without your name or email) are sent to Google's AI service for analysis. This is not investment advice.")}</p>
       </section>
 `,   // the facts are still computed and sent to the AI, they are just no longer listed on the page
     after(){ if(F && AI_ON) renderAi(); }
@@ -2842,6 +2878,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=31" defer></script>
+<script src="mascot3d.js?v=32" defer></script>
 </body>
 </html>
