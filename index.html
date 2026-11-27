@@ -2145,7 +2145,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2285,7 +2285,7 @@ function renderAi(){
   const busy = ai.state === "busy";
   const sug = [L("علاش كنخسر؟", "Why am I losing?"), L("شنو أكبر غلطة كنعاودها؟", "What mistake do I repeat most?"), L("شنو خاصني نبدل هاد السيمانة؟", "What should I change this week?")];
   box.innerHTML = `<div class="aiact"><button class="btn" data-act="ai-report" ${busy ? "disabled" : ""}>${ICON.spark}${busy && ai.reportOn && !ai.report ? L("جارٍ التحليل...", "Analyzing...") : L("حلّل أدائي", "Analyze my trading")}</button>
-      <span class="hint">Gemini</span></div>
+      <span class="hint">IZUMI EDGE AI</span></div>
     <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
     <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
     <div class="aisug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
@@ -2737,5 +2737,7 @@ const savedTheme = read(KEY + "-theme", null); document.documentElement.dataset.
 load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
+<!-- 3D mascot companion (Three.js loads only after the page is ready) -->
+<script src="mascot3d.js?v=19" defer></script>
 </body>
 </html>
