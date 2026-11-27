@@ -2145,7 +2145,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2200,9 +2200,10 @@ document.addEventListener("change", async e => {
 // Only the summary facts are sent, never the trades themselves. It uses its own Firebase app on a newer SDK so the
 // journal's sync code (SDK 10.12.2) is untouched.
 const FB_AI_VER = "13.2.0";
-const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]; // the second is used when the first fails or is busy
-const AI_ON = false;             // true once Firebase AI Logic is switched on in the Firebase console
-const APPCHECK_SITE_KEY = "";    // public reCAPTCHA v3 site key, if App Check is enforced for AI Logic
+// flash-lite answers in about 3 seconds; flash is smarter but took over a minute, so it is only the fallback
+const AI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];
+const AI_ON = true;              // Firebase AI Logic (Gemini Developer API) is switched on in the Firebase console
+const APPCHECK_SITE_KEY = "6LeuWDQuAAAAAAbe8JtDGTO2k5cGj6mG3njsJFkp"; // public Fraud Defense (reCAPTCHA Enterprise) site key in itachi-journaling; App Check is enforced for AI Logic
 const ai = {state: "ready", report: "", reportOn: false, chat: []};
 let aiApp = null, aiCheck = false;
 async function aiModel(idx, system){
@@ -2211,15 +2212,16 @@ async function aiModel(idx, system){
   aiApp ||= appM.getApps().find(a => a.name === "ai") || appM.initializeApp(FB_CONFIG, "ai");
   if(APPCHECK_SITE_KEY && !aiCheck){
     const ac = await import(base + "firebase-app-check.js");
-    ac.initializeAppCheck(aiApp, {provider: new ac.ReCaptchaV3Provider(APPCHECK_SITE_KEY), isTokenAutoRefreshEnabled: true});
+    // Registered in Firebase App Check with Fraud Defense (reCAPTCHA Enterprise)
+    ac.initializeAppCheck(aiApp, {provider: new ac.ReCaptchaEnterpriseProvider(APPCHECK_SITE_KEY), isTokenAutoRefreshEnabled: true});
     aiCheck = true;
   }
   return aiM.getGenerativeModel(aiM.getAI(aiApp, {backend: new aiM.GoogleAIBackend()}),
-    {model: AI_MODELS[idx], systemInstruction: system, generationConfig: {temperature: .3, maxOutputTokens: 1000}});
+    {model: AI_MODELS[idx], systemInstruction: system, generationConfig: {temperature: .3, maxOutputTokens: 4096}});
 }
 const aiErrText = e => { const m = String(e?.message || e);
   return !navigator.onLine ? L("تحتاج اتصالاً بالإنترنت.", "You need an internet connection.")
-    : /\b403\b|api-not-enabled|has not been used|is disabled|SERVICE_DISABLED|app-check/i.test(m) ? L("الذكاء الاصطناعي غير مفعّل بعد في هذا التطبيق.", "AI isn't switched on for this app yet.")
+    : /\b403\b|api-not-enabled|has not been used|is disabled|SERVICE_DISABLED|app.?check/i.test(m) ? L("الذكاء الاصطناعي غير مفعّل بعد في هذا التطبيق.", "AI isn't switched on for this app yet.")
     : /\b429\b|quota|RESOURCE_EXHAUSTED/i.test(m) ? L("انتهت الحصة المجانية للذكاء الاصطناعي مؤقتاً. جرّب بعد قليل أو غداً.", "The free AI quota is used up for now. Try again later or tomorrow.")
     : L("تعذّر الاتصال بالذكاء الاصطناعي الآن. جرّب بعد قليل.", "Couldn't reach the AI right now. Try again shortly."); };
 
