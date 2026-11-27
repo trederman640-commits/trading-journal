@@ -413,8 +413,8 @@
     const br = reduced ? 0 : Math.sin(s * 1.8);
     let rArm = [0, 0, .3 + br * .04], lArm = [0, 0, -.3 - br * .04], rFore = [0, 0, 0], lFore = [0, 0, 0];
     let spine = [0, 0, br * .025], neck = [0, look.x * .45, -look.y * .25];
-    if(a && a.kind === "tap"){        // waves with the right hand
-      rArm = [0, -.3 * env, .3 - 2.1 * env]; rFore = [0, 0, Math.sin(p * Math.PI * 7) * .55 * env]; neck[0] = .18 * env;
+    if(a && a.kind === "tap"){        // a small friendly nod (the hand wave was removed: it looked wrong on the rigs)
+      neck = [.12 * env, neck[1], neck[2] - Math.sin(p * Math.PI * 2) * .18 * env];
     } else if(a && a.kind === "win"){ // claps in front of the chest
       const c = Math.abs(Math.sin(p * Math.PI * 9)) * .35;
       rArm = [0, (-1.15 + c) * env, .3 - .55 * env]; lArm = [0, (1.15 - c) * env, -.3 + .55 * env]; spine[2] += .08 * env;
