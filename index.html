@@ -236,6 +236,12 @@ tbody tr.click:hover{background:var(--soft)}
 .tag.buy{background:var(--win-soft);color:var(--win)} .tag.sell{background:var(--loss-soft);color:var(--loss)}
 .tag.gray{background:var(--soft);color:var(--muted);font-weight:500}
 .empty{color:var(--muted);text-align:center;padding:30px}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.stbox{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.stbox span{color:var(--muted);font-size:12.5px;display:flex;align-items:center;gap:6px}
+.stbox b{font-size:28px;font-weight:600;letter-spacing:-.5px}
+.stbox small{color:var(--muted);font-size:11.5px}
+.stlive{width:8px;height:8px;border-radius:50%;background:var(--win);box-shadow:0 0 0 3px color-mix(in srgb,var(--win) 25%,transparent);display:inline-block}
 /* AI analyst */
 .cfacts{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:10px}
 .cfacts li{padding:12px 14px;border-radius:16px;background:var(--soft);border:1px solid var(--line);border-inline-start:3px solid var(--muted);line-height:1.75;font-size:14px}
@@ -1838,6 +1844,37 @@ async function initFirebase(){
     fbState = "offline"; route();
   }
 }
+// Anonymous presence for the admin stats: when this visitor was last online, signed in or not, website or installed app.
+// No name, email or journal data. Every visitor already has a Firebase uid (anonymous sign-in).
+let presT = null;
+function startPresence(user){
+  clearInterval(presT);
+  const beat = () => {
+    if(document.hidden || !fbUser || fbUser.uid !== user.uid) return;
+    const k = KEY + "-pres-" + user.uid, first = !read(k, false);
+    fb.setDoc(fb.doc(fb.db, "presence", user.uid), {lastSeen: fb.serverTimestamp(), signedIn: !user.isAnonymous, app: isStandalone(), ...(first ? {firstSeen: fb.serverTimestamp()} : {})}, {merge: true})
+      .then(() => { if(first) write(k, true); }).catch(() => {});
+  };
+  beat(); presT = setInterval(beat, 120000);
+}
+document.addEventListener("visibilitychange", () => { if(!document.hidden && fbUser && fb) startPresence(fbUser); });
+
+// Admin stats: counted on the server (aggregation queries), refreshed every minute while the admin page is open
+let adminStats = null, statsBusy = false, statsT = null;
+async function loadStats(){
+  if(!fb || !isOwner() || statsBusy) return;
+  statsBusy = true;
+  const col = fb.collection(fb.db, "presence"), ago = ms => fb.Timestamp.fromMillis(Date.now() - ms);
+  const day0 = new Date(); day0.setHours(0, 0, 0, 0);
+  const q = (...w) => fb.getCountFromServer(w.length ? fb.query(col, ...w) : col).then(s => s.data().count);
+  try{
+    const [online, today, week, total, reg, app] = await Promise.all([q(fb.where("lastSeen", ">=", ago(3 * 60e3))), q(fb.where("lastSeen", ">=", fb.Timestamp.fromDate(day0))),
+      q(fb.where("lastSeen", ">=", ago(7 * 864e5))), q(), q(fb.where("signedIn", "==", true)), q(fb.where("app", "==", true))]);
+    adminStats = {online, today, week, total, reg, app, at: Date.now()};
+  }catch(e){ adminStats = {err: String(e.code || e.message), at: Date.now()}; }
+  statsBusy = false;
+  if(/^#(ads|owner)/.test(location.hash)) route();
+}
 async function onUser(user){
   unsubMine?.(); unsubAll?.(); unsubMine = unsubAll = null;
   fbUser = user;
@@ -1846,6 +1883,7 @@ async function onUser(user){
     return;
   }
   fbState = "ready";
+  startPresence(user);
   write(KEY + "-was-owner", isOwner());
   stopSync();
   if(!user.isAnonymous) startSync(user);
@@ -1960,17 +1998,33 @@ function adminPage(){
   return { html: `<div class="head"><h1>${L("لوحة الأدمين", "Admin panel")}</h1>
       <span class="live"><i></i>${esc(fbUser.email)}</span>
       <button class="btn ghost sm" data-act="owner-logout">${L("تسجيل الخروج", "Sign out")}</button></div>
-    <div class="panel"><h2>${ICON.lock}${L("طلبات الوصول", "Access requests")}</h2>
-      <div class="tabs">${[["pending", L("بانتظار الموافقة", "Pending")], ["approved", L("موافق عليهم", "Approved")], ["rejected", L("مرفوضة", "Rejected")]]
-        .map(([k, t]) => `<button class="${adminTab === k ? "on" : ""}" data-act="admin-tab" data-tab="${k}">${t} <span class="cnt">${counts[k]}</span></button>`).join("")}</div>
-      <div class="reqlist">${!reqLoaded ? `<div class="empty">${L("جارٍ التحميل...", "Loading...")}</div>`
-        : list.length ? list.map(reqRow).join("") : `<div class="empty">${adminTab === "pending" ? L("لا توجد طلبات جديدة. ستظهر هنا فوراً عندما يطلب أحد الإذن.", "No new requests. They appear here instantly when someone asks.") : L("لا يوجد أحد هنا.", "Nobody here.")}</div>`}</div>
-    </div>
+    ${statsPanel()}
     <div class="head" style="margin-top:6px"><h1 style="font-size:22px">${L("الإعلانات", "Announcements")} <span class="cnt">${remoteAds.length}</span></h1>
       <button class="btn" data-act="add-ad">${ICON.plus}${L("إعلان جديد", "New announcement")}</button></div>
     <p class="hint" style="margin:0">${L("الإعلان يبقى ظاهراً حتى تقرر: «إيقاف» يخفيه مؤقتاً، و«حذف» يزيله نهائياً. كل تغيير يصل للمستخدمين المتصلين فوراً.", "An announcement stays up until you decide: “Pause” hides it for now, “Delete” removes it for good. Every change reaches online users instantly.")}</p>
     ${ownerStatus ? `<p class="hint" style="margin:0">${ownerStatus}</p>` : ""}
-    ${remoteAds.length ? `<div class="ntgrid">${remoteAds.map(adRow).join("")}</div>` : `<div class="panel empty">${L("لا توجد إعلانات. أنشئ أول إعلان.", "No announcements. Create the first one.")}</div>`}` };
+    ${remoteAds.length ? `<div class="ntgrid">${remoteAds.map(adRow).join("")}</div>` : `<div class="panel empty">${L("لا توجد إعلانات. أنشئ أول إعلان.", "No announcements. Create the first one.")}</div>`}`,
+    after(){
+      if(!adminStats || Date.now() - adminStats.at > 55e3) loadStats();
+      statsT ||= setInterval(() => { if(/^#(ads|owner)/.test(location.hash)) loadStats(); else { clearInterval(statsT); statsT = null; } }, 60e3);
+    } };
+}
+function statsPanel(){
+  const s = adminStats, n = v => (v ?? 0).toLocaleString("en-US");
+  const box = (label, v, sub, live) => `<div class="stbox"><span>${live ? '<i class="stlive"></i>' : ""}${label}</span><b>${n(v)}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+  return `<div class="panel"><h2>${ICON.chart}${L("الإحصائيات", "Statistics")}</h2>
+    ${!s ? `<div class="empty">${L("جارٍ التحميل...", "Loading...")}</div>`
+    : s.err ? `<div class="empty">${L("تعذّر تحميل الإحصائيات", "Could not load the statistics")} (${esc(s.err)})</div>`
+    : `<div class="stgrid">
+        ${box(L("متصلين دابا", "Online now"), s.online, L("آخر 3 دقائق", "last 3 minutes"), true)}
+        ${box(L("زوار اليوم", "Visitors today"), s.today)}
+        ${box(L("زوار 7 أيام", "Visitors, 7 days"), s.week)}
+        ${box(L("كل الزوار", "All visitors"), s.total, L("منذ تفعيل الإحصائيات", "since stats began"))}
+        ${box(L("حسابات مسجّلة", "Registered accounts"), s.reg, L("Google أو البريد", "Google or email"))}
+        ${box(L("التطبيق / الموقع", "App / website"), s.app, L(`التطبيق · ${n(s.total - s.app)} الموقع`, `app · ${n(s.total - s.app)} website`))}
+      </div>
+      <p class="hint" style="margin:10px 0 0">${L("تتحدّث كل دقيقة. لا تُحفظ أسماء ولا بريد ولا بيانات اليومية.", "Updates every minute. No names, emails or journal data are stored.")}</p>`}
+  </div>`;
 }
 
 let editingAd = null, adDraft = null;
@@ -2159,7 +2213,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 20;
+const APP_VERSION = 21;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2752,6 +2806,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=20" defer></script>
+<script src="mascot3d.js?v=21" defer></script>
 </body>
 </html>
