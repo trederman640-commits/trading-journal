@@ -258,6 +258,31 @@ tbody tr.click:hover{background:var(--soft)}
 .aisug button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
 .aiask{display:flex;gap:8px;margin-top:10px}
 .aiask input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--soft);color:var(--ink);font:inherit}
+/* AI Analyst hero: dark stage with a soft light at the bottom, gradient title, prompt box and suggestion chips */
+.aizhero{position:relative;text-align:center;padding:56px 20px 44px;margin-bottom:16px;border-radius:28px;border:1px solid var(--line);overflow:hidden;
+  background:radial-gradient(90% 60% at 50% 115%,color-mix(in srgb,var(--ink) 13%,transparent),transparent 70%),var(--solid)}
+.aizpill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:12.5px;color:var(--muted);background:var(--soft)}
+.aizpill svg{width:14px;height:14px}
+.aiztitle{font-size:clamp(24px,3.6vw,38px);font-weight:500;line-height:1.35;margin:20px auto 30px;color:var(--muted);letter-spacing:-.3px;max-width:760px}
+.aiztitle b{color:var(--ink);font-weight:600}
+.aizc{max-width:640px;margin:0 auto;text-align:start;background:var(--soft);border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);border-radius:18px;padding:14px 14px 10px;
+  box-shadow:0 18px 50px rgba(0,0,0,.35),inset 0 1px 0 color-mix(in srgb,var(--ink) 6%,transparent)}
+.aizc textarea{width:100%;border:0;background:none;color:var(--ink);font:inherit;font-size:14.5px;line-height:1.7;resize:none;outline:none;min-height:48px}
+.aizc textarea::placeholder{color:var(--muted)}
+.aizrow{display:flex;align-items:center;gap:10px;margin-top:6px}
+.aiztool{display:inline-flex;align-items:center;gap:6px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer;padding:4px 2px}
+.aiztool:hover{color:var(--ink)} .aiztool svg{width:15px;height:15px}
+.aizmodel{margin-inline-start:auto;display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:12.5px}
+.aizmodel svg{width:14px;height:14px}
+.aizsend{width:34px;height:34px;border-radius:50%;border:0;background:var(--ink);color:var(--solid);font-size:17px;font-weight:700;cursor:pointer;display:grid;place-items:center}
+.aizsend:disabled,.aiztool:disabled{opacity:.45;cursor:default}
+.aizsug{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px auto 0;max-width:680px}
+.aizsug button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer}
+.aizsug button:hover{color:var(--ink);border-color:color-mix(in srgb,var(--ink) 25%,transparent)}
+.aizout{max-width:680px;margin:0 auto;text-align:start}
+.aizsub{max-width:660px;margin:34px auto 0;color:var(--muted);font-size:15px;line-height:1.9}
+.aizsub b{color:var(--ink);font-weight:500}
+@media (max-width:700px){.aizhero{padding:36px 14px 30px}.aizsub{font-size:14px}}
 
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.1fr);gap:6px}
@@ -2213,7 +2238,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 27;
+const APP_VERSION = 28;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2351,17 +2376,21 @@ const fmtAi = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^#{1,4
 function renderAi(){
   const box = $("aiBox"); if(!box) return;
   const busy = ai.state === "busy";
-  const sug = [L("علاش كنخسر؟", "Why am I losing?"), L("شنو أكبر غلطة كنعاودها؟", "What mistake do I repeat most?"), L("شنو خاصني نبدل هاد السيمانة؟", "What should I change this week?")];
-  box.innerHTML = `<div class="aiact"><button class="btn" data-act="ai-report" ${busy ? "disabled" : ""}>${ICON.spark}${busy && ai.reportOn && !ai.report ? L("جارٍ التحليل...", "Analyzing...") : L("حلّل أدائي", "Analyze my trading")}</button>
-      <span class="hint">IZUMI EDGE AI</span></div>
-    <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
-    <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
-    <div class="aisug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
-    <div class="aiask"><input id="aiQ" maxlength="300" placeholder="${L("اسأل المحلل عن صفقاتك...", "Ask the analyst about your trades...")}">
-      <button class="btn" data-act="ai-ask" ${busy ? "disabled" : ""}>${L("إرسال", "Send")}</button></div>
-    <p class="hint">${L("عند الاستعمال تُرسَل الأرقام الملخّصة أسفله فقط إلى Google Gemini، وليس صفقاتك. الذكاء الاصطناعي قد يخطئ، وهذا تحليل لأدائك وليس نصيحة استثمارية.",
-      "Only the summary numbers below are sent to Google Gemini, never your trades. AI can make mistakes; this analyses your performance and is not investment advice.")}</p>`;
-  $("aiQ").onkeydown = e => { if(e.key === "Enter") actions["ai-ask"](); };
+  const sug = [L("لماذا أخسر؟", "Why am I losing?"), L("ما أكثر خطأ أكرّره؟", "What mistake do I repeat most?"), L("ماذا أغيّر هذا الأسبوع؟", "What should I change this week?"), L("هل أحترم وقف الخسارة؟", "Do I respect my stops?")];
+  // Composer in the style of an AI prompt box: question field, report button, model name and a round send button
+  box.innerHTML = `<div class="aizc">
+      <textarea id="aiQ" rows="2" maxlength="300" placeholder="${L("اسأل المحلل عن صفقاتك... مثلاً: ما الذي يكلّفني أكثر؟", "Ask the analyst about your trades... e.g. what costs me the most?")}"></textarea>
+      <div class="aizrow">
+        <button type="button" class="aiztool" data-act="ai-report" ${busy ? "disabled" : ""}>${ICON.chart}${busy && ai.reportOn && !ai.report ? L("جارٍ التحليل...", "Analyzing...") : L("حلّل أدائي", "Analyze my trading")}</button>
+        <span class="aizmodel">${ICON.spark}IZUMI EDGE AI</span>
+        <button type="button" class="aizsend" data-act="ai-ask" ${busy ? "disabled" : ""} aria-label="${L("إرسال", "Send")}">↑</button>
+      </div></div>
+    <div class="aizsug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
+    <div class="aizout">
+      <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
+      <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
+    </div>`;
+  $("aiQ").onkeydown = e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); actions["ai-ask"](); } };
 }
 async function aiRun(q, isChat){
   const F = coachFacts();
@@ -2398,9 +2427,14 @@ Object.assign(actions, {
 pages.coach = () => {
   const F = coachFacts();
   return {
-    html: `<div class="head"><h1>${L("المحلل الذكي", "AI Analyst")}</h1></div>
-      ${!F ? `<div class="panel empty">${L("سجّل 5 صفقات مغلقة على الأقل ليبدأ المحلل بتحليل أدائك.", "Log at least 5 closed trades so the analyst can study your results.")}</div>` : `
-      ${AI_ON ? `<div class="panel"><h2>${ICON.spark}${L("اسأل الذكاء الاصطناعي", "Ask the AI")}</h2><div id="aiBox"></div></div>` : ""}
+    html: `<section class="aizhero">
+        <span class="aizpill">${ICON.spark}${L("محلّلك الذكي للتداول", "Your AI trading analyst")}</span>
+        <h1 class="aiztitle">${L("<b>IZUMI EDGE AI</b> يقرأ صفقاتك<br>ويخبرك <b>بما يجب تغييره</b>", "<b>IZUMI EDGE AI</b> reads your trades<br>and tells you <b>what to change</b>")}</h1>
+        ${!F ? `<div class="empty">${L("سجّل 5 صفقات مغلقة على الأقل ليبدأ المحلل بتحليل أدائك.", "Log at least 5 closed trades so the analyst can study your results.")}</div>` : AI_ON ? `<div id="aiBox"></div>` : ""}
+        <p class="aizsub">${L("مساعد مصمَّم ليكون <b>رفيقك الشخصي</b> في التداول: يحلّل <b>أرقامك وأخطاءك وانضباطك</b> ويعطيك <b>خطوات عملية</b> لتحسين أدائك. تُرسَل الأرقام الملخّصة فقط وليس صفقاتك، والتحليل ليس نصيحة استثمارية.",
+          "An assistant designed to be your <b>personal trading companion</b>: it analyses <b>your numbers, mistakes and discipline</b> and gives you <b>practical steps</b> to improve. Only summary numbers are sent, never your trades, and this is not investment advice.")}</p>
+      </section>
+      ${!F ? "" : `
       <div class="panel"><h2>${ICON.chart}${L("ما وجده المحلل في صفقاتك", "What the analyst found")}</h2>
         <ul class="cfacts">${F.map(f => `<li class="${f.tone}">${f.txt}</li>`).join("")}</ul>
         <p class="hint">${L("محسوبة مباشرة من صفقاتك المسجّلة.", "Computed directly from your logged trades.")}</p></div>`}`,
@@ -2806,6 +2840,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=27" defer></script>
+<script src="mascot3d.js?v=28" defer></script>
 </body>
 </html>
