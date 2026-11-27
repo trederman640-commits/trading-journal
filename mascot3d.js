@@ -73,6 +73,9 @@
   @media (min-width:901px){body.m3-docked-on #side{align-self:stretch}body.m3-docked-on .m3-dock{position:sticky;top:16px;z-index:2;background:var(--solid,#131315);box-shadow:0 0 0 6px var(--solid,#131315)}}
   .m3-pop{position:fixed !important;z-index:80}
   #m3.m3-docked .m3-think{right:6px;top:6px}
+  .m3-sym{position:absolute;top:8px;left:62%;font:800 18px system-ui;color:#fff;text-shadow:0 0 8px var(--m3c,#5d8cff),0 0 2px #000;opacity:0;transform:translateY(4px);transition:opacity .25s,transform .25s;pointer-events:none;z-index:2}
+  .m3-sym.on{opacity:1;transform:none;animation:m3float 1.6s ease-in-out infinite}
+  @keyframes m3float{50%{transform:translateY(-4px)}}
   .m3-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
   .m3-acts button{background:#f2f2f2;color:#0a0a0a;border:0;border-radius:999px;padding:5px 12px;font:600 12px system-ui;cursor:pointer}
   .m3-acts button+button{background:#2a2a35;color:#ddd}
@@ -128,7 +131,7 @@
       <div class="m3-in"><input maxlength="300" placeholder="${T("سول على صفقاتك...", "Ask about your trades...")}"><button>${T("إرسال", "Send")}</button></div>
       <div class="m3-mood"><div>${T("كيفاش حاس دابا؟", "How do you feel right now?")}</div><div class="m3-feel"></div>
         <textarea placeholder="${T("شنو اللي فبالك؟ (اختياري)", "What's on your mind? (optional)")}"></textarea><button class="m3-save">${T("حفظ", "Save")}</button></div></div>
-    <div class="m3-glow"></div><div class="m3-think"><i></i><i></i><i></i></div><div class="m3-say" id="m3Say"></div><canvas></canvas><div class="m3-fb"></div><div class="m3-note"></div><div class="m3-load">…</div>
+    <div class="m3-glow"></div><div class="m3-sym"></div><div class="m3-think"><i></i><i></i><i></i></div><div class="m3-say" id="m3Say"></div><canvas></canvas><div class="m3-fb"></div><div class="m3-note"></div><div class="m3-load">…</div>
     <div class="m3-bar"><button data-a="menu" title="${T("بدّل الشخصية", "Change character")}">☰</button><button data-a="reset" title="${T("رجّع الزاوية", "Reset view")}">⟲</button>
       <button data-a="chat" title="${T("المحلل الذكي", "AI Analyst")}">✦</button><button data-a="move" title="${T("حرّك", "Move")}">✥</button><button data-a="mini" title="${T("صغّر", "Minimise")}">–</button></div>
     <div class="m3-menu"></div>`;
@@ -207,7 +210,11 @@
   }
 
   /* ---------- 3D ---------- */
-  let pivot, snow, bones = null, _q, _e;
+  let pivot, snow, bones = null, _q, _e, lastActive = performance.now();
+  for(const ev of ["pointermove", "keydown", "scroll", "touchstart"]) addEventListener(ev, () => {
+    lastActive = performance.now();
+    if(face && face.cur === "sleepy"){ drawExpr("neutral"); sym(""); }
+  }, {passive: true, capture: true});
   // Rotate a bone relative to its rest pose (radians, local axes)
   function setBone(name, x, y, z){ const b = bones && bones[name]; if(!b) return; _e.set(x, y, z); _q.setFromEuler(_e); b.o.quaternion.copy(b.rest).multiply(_q); }
   const pickLine = arr => { const p = arr[Math.floor(Math.random() * arr.length)]; return T(p[0], p[1]); };
@@ -361,15 +368,31 @@
         ctx.beginPath(); ctx.moveTo(-1.5, 1.6); ctx.lineTo(1.5, 1.6); ctx.lineTo(1.5, s > 0 ? -.05 : .5); ctx.lineTo(-1.5, s > 0 ? .5 : -.05); ctx.closePath(); ctx.fill();
         ctx.lineWidth = .16; ctx.beginPath(); ctx.moveTo(-1.5, s > 0 ? .5 : -.05); ctx.lineTo(1.5, s > 0 ? -.05 : .5); ctx.stroke(); ctx.restore();
         ctx.lineWidth = .14; ctx.beginPath(); ctx.moveTo(-1, s > 0 ? 1.55 : 1.05); ctx.lineTo(1, s > 0 ? 1.05 : 1.55); ctx.stroke();   // worried brow
+      } else if(kind === "surprised"){  // wide open eyes
+        ctx.beginPath(); ctx.ellipse(0, 0, 1.35, 1.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = ink; ctx.beginPath(); ctx.ellipse(0, .05, 1.05, 1.3, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.arc(.3, .45, .22, 0, 7); ctx.fill();
+      } else if(kind === "sleepy"){     // flat, almost closed eyes
+        ctx.beginPath(); ctx.ellipse(0, 0, 1.3, 1.35, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = .3; ctx.beginPath(); ctx.moveTo(-.85, -.2); ctx.lineTo(.85, -.2); ctx.stroke();
+      } else if(kind === "focus"){      // narrowed, inner corners low: thinking hard
+        ctx.save(); ctx.beginPath(); ctx.ellipse(0, 0, 1.25, 1.3, 0, 0, Math.PI * 2); ctx.clip();
+        ctx.beginPath(); ctx.moveTo(-1.5, 1.6); ctx.lineTo(1.5, 1.6); ctx.lineTo(1.5, s > 0 ? .45 : -.1); ctx.lineTo(-1.5, s > 0 ? -.1 : .45); ctx.closePath(); ctx.fill();
+        ctx.lineWidth = .16; ctx.beginPath(); ctx.moveTo(-1.5, s > 0 ? -.1 : .45); ctx.lineTo(1.5, s > 0 ? .45 : -.1); ctx.stroke(); ctx.restore();
       }
       ctx.restore(); e.tex.needsUpdate = true;
     }
     f.cur = kind;
   }
-  function expr(kind, secs){ if(!face) return; drawExpr(kind); face.until = secs ? performance.now() / 1000 + secs : 0; }
+  // Little symbol above the head that goes with some expressions: "!!", "Zz", "?"
+  const SYM = {surprised: "!!", sleepy: "Zz", focus: "?"};
+  function sym(kind){ const el = box.querySelector(".m3-sym"); el.textContent = SYM[kind] || ""; el.classList.toggle("on", !!SYM[kind]); }
+  function expr(kind, secs){ if(!face) return; drawExpr(kind); sym(kind); face.until = secs ? performance.now() / 1000 + secs : 0; }
   function stepFace(s){
     const f = face; if(!f) return;
-    if(f.until && s > f.until){ f.until = 0; drawExpr("neutral"); }
+    if(f.until && s > f.until){ f.until = 0; drawExpr(f.after || "neutral"); sym(f.after); f.after = null; }
+    // Dozes off after 90 s without any activity, wakes up on the next move
+    if(f.cur === "neutral" && !chat.busy && performance.now() - lastActive > 90e3){ drawExpr("sleepy"); sym("sleepy"); }
     if(f.cur === "neutral" && s > f.blinkAt){ drawExpr("blink"); f.until = s + .12; f.blinkAt = s + 2.5 + Math.random() * 3.5; }
   }
 
@@ -438,9 +461,14 @@
     mood = kind;
     if(keyRim){ keyRim.color.set(MOOD[kind] ?? cur.glow); box.style.setProperty("--m3c", "#" + keyRim.color.getHexString()); }
     const own = cur && cur.lines;
-    if(kind === "win"){ play(actions.happy ? "happy" : "win2", true); snow && emit("burst"); expr("happy", 3);
+    // A trade much bigger than usual (win or loss) surprises it first: "!!"
+    let big = false;
+    try{ const c = trades.filter(t => pnl(t) !== null), avg = c.reduce((a, t) => a + Math.abs(pnl(t)), 0) / (c.length || 1), last = c.sort(byTime)[c.length - 1];
+      big = c.length > 4 && last && Math.abs(pnl(last)) > avg * 2; }catch(e){}
+    const feel = (k, secs) => { if(big && face){ expr("surprised", 1.6); face.after = k; setTimeout(() => expr(k, secs), 1600); } else expr(k, secs); };
+    if(kind === "win"){ play(actions.happy ? "happy" : "win2", true); snow && emit("burst"); feel("happy", 3);
       speak(own?.win ? pickLine(own.win) : T("ربحة زوينة! 🎉 خليك على نفس الخطة.", "Nice win! 🎉 Stick to the plan.")); }
-    else if(kind === "loss"){ play("sad", true); snow && emit("fall"); expr("sad", 4);
+    else if(kind === "loss"){ play("sad", true); snow && emit("fall"); feel("sad", 4);
       speak(own?.loss ? pickLine(own.loss) : T("الخسارة جزء من اللعبة. واش احترمتي الستوب؟", "Losses are part of the game. Did you respect your stop?")); }
     else play("idle");
   }
@@ -614,7 +642,7 @@
     const el = box.querySelector(".m3-think"), was = el.classList.contains("on");
     if(on === was) return;
     el.classList.toggle("on", on);
-    if(on){ act("think", 120); look.y = -.6; look.x = .3; expr("neutral"); }
+    if(on){ act("think", 120); look.y = -.6; look.x = .3; expr("focus"); }
     else { if(pivot && pivot.userData.act?.kind === "think") pivot.userData.act = null; act("tap"); expr("happy", 1.2); }
   }
   chatBox.querySelector(".m3-in button").onclick = () => { const q = qIn.value.trim(); qIn.value = ""; ask(q); };
