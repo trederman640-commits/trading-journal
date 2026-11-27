@@ -18,10 +18,20 @@
         ["واش شربتي شي حاجة سخونة قبل ما تبدا؟ ☕", "Had something warm before trading? ☕"]],
       win: [["ياي! ❄️✨ ربحة نقية بحال الثلج!", "Yay! ❄️✨ A clean win, pure as snow!"], ["الثلج كيشطح معاك! بقا على نفس الخطة.", "The snow dances with you! Keep the same plan."]],
       loss: [["ما تقلقش… حتى الثلج كيذوب وكيرجع 🌨️", "Don't worry… even snow melts and comes back 🌨️"], ["خود نفس بارد، والصفقة الجاية بهدوء.", "Take a cool breath, the next trade calmly."]]}},
-    {id: "ember", name: "Ember", url: "models/ember.glb", art: 1, glow: 0xff3040},
+    {id: "ember", name: "Ember", url: "models/ember.glb", art: 1, glow: 0xff3040, float: true, particle: 0xff5a3c,
+      // Dark face with glowing eyes: lids are the face colour and expressions are drawn in light
+      face: {eyes: [[-.075, .96], [.105, .96]], eyeR: .064, skin: "#0b0709", ink: "#ffe3e3"},
+      theme: {dark: {bg: "#0d0607", panel: "rgba(30,14,16,.86)", solid: "#1a0c0e", soft: "#231114", line: "rgba(255,90,90,.13)", muted: "#a88b8e"},
+        light: {bg: "#f6e6e7", panel: "rgba(255,250,250,.8)", solid: "#fff8f8", soft: "#fbeeee", line: "rgba(160,30,40,.1)", muted: "#8a6f72"}},
+      persona: "أنت «إمبر»، روح نارية صغيرة بقرون، مدرّب صارم ولكن عادل، كتهضر بالدارجة بجمل قصيرة ومباشرة على الانضباط واحترام الستوب، بلا ما تكون قاسي.",
+      lines: {
+        hi: [["إمبر هنا 🔥 الانضباط قبل الربح.", "Ember here 🔥 Discipline before profit."]],
+        tap: [["🔥 واش الخطة ديال اليوم واجدة؟", "🔥 Is today's plan ready?"], ["ما كاينش دخول بلا ستوب. مفهوم؟", "No entry without a stop. Clear?"]],
+        win: [["🔥 هاكا! نار منضبطة.", "🔥 That's it! Disciplined fire."], ["ربحة مزيانة. ما تكبّرش الحجم بسبب الحماس.", "Good win. Don't size up out of excitement."]],
+        loss: [["الخسارة كتعلّم. شنو الغلطة؟ كتبها.", "Losses teach. What was the mistake? Write it down."], ["طفّي النار شوية، والصفقة الجاية بالخطة.", "Cool the fire, next trade by the plan."]]}},
     {id: "geeko", name: "Geeko", url: "models/geeko.glb", art: 2, glow: 0x9cff3a},
     {id: "dark", name: "Dark Ascendant", url: "models/dark.glb", art: 3, glow: 0xa060ff},
-  ].filter(c => c.id === "yuki");   // only characters whose 3D model is ready are offered (Ember, Geeko, Dark Ascendant: models still to make)
+  ].filter(c => ["yuki", "ember"].includes(c.id));   // only characters whose 3D model is ready are offered (Geeko, Dark Ascendant: models still to make)
   const MOOD = {idle: null, win: 0x22c55e, loss: 0xef4444};
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const store = {get: k => { try{ return localStorage.getItem(k); }catch(e){ return null; } }, set: (k, v) => { try{ localStorage.setItem(k, v); }catch(e){} }};
@@ -314,7 +324,7 @@
     const eyes = [], R = cfg.eyeR || .06, S = 128;
     for(const [ex, ey] of cfg.eyes){
       const side = ex < 0 ? -1 : 1, h = hitAt(ex, ey); if(!h) continue;
-      const skin = colorAt(hitAt(ex, ey + R * 1.6)) || colorAt(hitAt(ex - side * R * 1.9, ey)) || "rgb(232,228,253)";
+      const skin = cfg.skin || colorAt(hitAt(ex, ey + R * 1.6)) || colorAt(hitAt(ex - side * R * 1.9, ey)) || "rgb(232,228,253)";
       const n = h.face.normal.clone().transformDirection(mesh.matrixWorld).lerp(new THREE.Vector3(0, 0, 1), .5).normalize();
       const rot = new THREE.Euler().setFromRotationMatrix(new THREE.Matrix4().lookAt(new THREE.Vector3(), n, new THREE.Vector3(0, 1, 0)));
       const geo = new DecalGeometry(mesh, h.point, rot, new THREE.Vector3(R * 3.2, R * 3.2, R * 4));
@@ -334,7 +344,7 @@
       e.dm.visible = kind !== "neutral";
       if(kind === "neutral") continue;
       ctx.save(); ctx.setTransform(-S / 3.2, 0, 0, -S / 3.2, S / 2, S / 2);   // eye-local units, y up (the decal mirrors x)
-      const ink = "#1b1f4a", s = e.side;   // side of the face: outer corners droop, inner corners stay high
+      const ink = (cur && cur.face && cur.face.ink) || "#1b1f4a", s = e.side;   // side of the face: outer corners droop, inner corners stay high
       ctx.fillStyle = e.skin; ctx.strokeStyle = ink; ctx.lineCap = "round"; ctx.lineWidth = .2;
       if(kind === "blink" || kind === "happy"){
         ctx.beginPath(); ctx.ellipse(0, 0, 1.3, 1.35, 0, 0, Math.PI * 2); ctx.fill();
@@ -652,7 +662,19 @@
     else if(m.kind === "loss"){ expr("sad", 3); act("loss");
       speak(m.why === "today" ? T(`اليوم صعيب شوية (<b>${amt}</b>). خود نفس، وما تحاولش ترجّعها بزربة.`, `Tough day (<b>${amt}</b>). Breathe, don't rush to win it back.`) : T(`آخر صفقاتك فالخسارة (<b>${amt}</b>). نقّص الحجم حتى ترجع الثقة.`, `Your last trades are red (<b>${amt}</b>). Size down until confidence is back.`), 6000); }
   }
-  window.itachiMascot = {react, moodCheck, act, thinking: on => thinking(on), expr: (k, s) => expr(k, s), face: () => face && {eyes: face.eyes.map(e => e.skin), cur: face.cur}, show: id => show(CHARS.find(c => c.id === id))};
+  // Developer helper to find a new character's eyes: brightness of the texture at a point on the fitted model
+  let probeCtx = null;
+  function probe(x, y){
+    let mesh; model.traverse(o => { if(o.isMesh && o.material && o.material.map && !mesh) mesh = o; });
+    const img = mesh.material.map.image;
+    if(!probeCtx){ const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; probeCtx = c.getContext("2d", {willReadFrequently: true}); probeCtx.drawImage(img, 0, 0); }
+    pivot.scale.setScalar(1); pivot.rotation.set(0, 0, 0); pivot.position.set(0, 0, 0); pivot.updateMatrixWorld(true);
+    const h = new THREE.Raycaster(new THREE.Vector3(x, y, 5), new THREE.Vector3(0, 0, -1)).intersectObject(mesh, false)[0];
+    if(!h || !h.uv) return -1;
+    const p = probeCtx.getImageData(Math.floor(h.uv.x * img.width), Math.floor(h.uv.y * img.height), 1, 1).data;
+    return (p[0] + p[1] + p[2]) / 765;
+  }
+  window.itachiMascot = {react, moodCheck, probe: (x, y) => probe(x, y), act, thinking: on => thinking(on), expr: (k, s) => expr(k, s), face: () => face && {eyes: face.eyes.map(e => e.skin), cur: face.cur}, show: id => show(CHARS.find(c => c.id === id))};
 
   const start = () => (window.requestIdleCallback || (f => setTimeout(f, 600)))(boot, {timeout: 2500});
   document.readyState === "complete" ? start() : addEventListener("load", start);
