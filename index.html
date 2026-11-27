@@ -280,6 +280,15 @@ tbody tr.click:hover{background:var(--soft)}
 .aizsug button{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 13px;font:inherit;font-size:12.5px;cursor:pointer}
 .aizsug button:hover{color:var(--ink);border-color:color-mix(in srgb,var(--ink) 25%,transparent)}
 .aizout{max-width:680px;margin:0 auto;text-align:start}
+.aizout[hidden]{display:none}
+/* Chat mode: title and paragraph hide, messages scroll above the box like a messenger */
+.aizhero.aizchat{justify-content:flex-end;padding-top:24px}
+.aizhero.aizchat .aiztitle,.aizhero.aizchat .aizsub,.aizhero.aizchat .aizsug{display:none}
+.aizhero.aizchat .aizpill{margin-bottom:14px}
+.aizhero.aizchat .aizout{flex:1;max-height:calc(100vh - 250px);overflow-y:auto;margin-bottom:14px;padding:4px 6px;scrollbar-width:thin}
+.aizhero.aizchat .aizout .aiout{margin-top:0}
+.aizhero.aizchat #aiBox{display:flex;flex-direction:column;flex:1;justify-content:flex-end;min-height:0}
+.aizhero.aizchat .aizc,.aizhero.aizchat .aizout{width:100%;max-width:720px;box-sizing:border-box}
 .aizsub{max-width:660px;margin:34px auto 0;color:var(--muted);font-size:15px;line-height:1.9}
 .aizsub b{color:var(--ink);font-weight:500}
 /* The section fills the screen and centres its content, so the page has no big empty area under it */
@@ -2243,7 +2252,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 32;
+const APP_VERSION = 33;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2383,19 +2392,27 @@ function renderAi(){
   const busy = ai.state === "busy";
   const sug = [L("لماذا أخسر؟", "Why am I losing?"), L("ما أكثر خطأ أكرّره؟", "What mistake do I repeat most?"), L("ماذا أغيّر هذا الأسبوع؟", "What should I change this week?"), L("هل أحترم وقف الخسارة؟", "Do I respect my stops?")];
   // Composer in the style of an AI prompt box: question field, report button, model name and a round send button
-  box.innerHTML = `<div class="aizc">
+  // Chat layout: once a conversation starts, the messages sit above (oldest at the top) and the box stays at the bottom
+  const active = ai.reportOn || ai.chat.length > 0;
+  box.closest(".aizhero")?.classList.toggle("aizchat", active);
+  box.innerHTML = `<div class="aizout" ${active ? "" : "hidden"}>
+      <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
+      <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
+    </div>
+    <div class="aizc">
       <textarea id="aiQ" rows="2" maxlength="300" placeholder="${L("اسأل المحلل عن صفقاتك... مثلاً: ما الذي يكلّفني أكثر؟", "Ask the analyst about your trades... e.g. what costs me the most?")}"></textarea>
       <div class="aizrow">
         <button type="button" class="aiztool" data-act="ai-report" ${busy ? "disabled" : ""}>${ICON.chart}${busy && ai.reportOn && !ai.report ? L("جارٍ التحليل...", "Analyzing...") : L("حلّل أدائي", "Analyze my trading")}</button>
         <span class="aizmodel">${ICON.spark}IZUMI EDGE AI</span>
         <button type="button" class="aizsend" data-act="ai-ask" ${busy ? "disabled" : ""} aria-label="${L("إرسال", "Send")}">↑</button>
       </div></div>
-    <div class="aizsug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
-    <div class="aizout">
-      <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
-      <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
-    </div>`;
+    <div class="aizsug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>`;
   $("aiQ").onkeydown = e => { if(e.key === "Enter" && !e.shiftKey){ e.preventDefault(); actions["ai-ask"](); } };
+  aiScroll();
+  if(!busy && active) $("aiQ").focus();
+}
+// Keep the newest message in view
+function aiScroll(){ const o = document.querySelector(".aizout"); if(o) o.scrollTop = o.scrollHeight;
 }
 // Full trade data for the AI, so it can answer any question (per day, per quarter, repeated losses...).
 // Totals are computed here, because language models are unreliable at adding up long lists.
@@ -2444,7 +2461,7 @@ async function aiRun(q, isChat){
   else { ai.reportOn = true; ai.report = ""; }
   ai.state = "busy"; renderAi();
   let out = "";
-  const show = () => { if(isChat) ai.chat[ai.chat.length - 1].content = out; else ai.report = out; const el = $(isChat ? "aiLast" : "aiOut"); if(el) el.innerHTML = fmtAi(out); };
+  const show = () => { if(isChat) ai.chat[ai.chat.length - 1].content = out; else ai.report = out; const el = $(isChat ? "aiLast" : "aiOut"); if(el) el.innerHTML = fmtAi(out); aiScroll(); };
   for(let idx = 0; idx < AI_MODELS.length; idx++){
     try{
       const model = await aiModel(idx, sys);
@@ -2878,6 +2895,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=32" defer></script>
+<script src="mascot3d.js?v=33" defer></script>
 </body>
 </html>
