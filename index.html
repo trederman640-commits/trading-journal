@@ -297,6 +297,29 @@ tbody tr.click:hover{background:var(--soft)}
 .aizhero > *{width:100%}
 .aizhero .aizpill{width:auto}
 @media (max-width:700px){.aizhero{padding:36px 14px 30px;min-height:calc(100vh - 90px)}.aizsub{font-size:14px}}
+/* Cinematic lighting: warm amber ambient glow with a hint of blue, soft rays, glass sheen on panels, bloom on key elements.
+   Static layers only (no animation behind blurred panels) so scrolling stays smooth. */
+:root{--amb1:rgba(255,140,50,.09);--amb2:rgba(255,190,120,.10);--amb3:rgba(90,140,255,.05);--ray:rgba(255,190,130,.06);--sheen:rgba(255,175,100,.05);--rim:rgba(255,255,255,.7);
+  --hl1:rgba(255,130,40,.16);--hl2:rgba(255,190,110,.12);--hl3:rgba(90,140,255,.07);--bloom:rgba(255,130,40,.14);--dust:255,170,90}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--amb1:rgba(255,110,20,.16);--amb2:rgba(255,160,70,.07);--amb3:rgba(70,120,255,.07);--ray:rgba(255,170,90,.045);--sheen:rgba(255,150,70,.04);--rim:rgba(255,200,150,.09);
+  --hl1:rgba(255,115,25,.30);--hl2:rgba(255,175,80,.16);--hl3:rgba(70,120,255,.11);--bloom:rgba(255,120,30,.18)}}
+:root[data-theme="dark"]{--amb1:rgba(255,110,20,.16);--amb2:rgba(255,160,70,.07);--amb3:rgba(70,120,255,.07);--ray:rgba(255,170,90,.045);--sheen:rgba(255,150,70,.04);--rim:rgba(255,200,150,.09);
+  --hl1:rgba(255,115,25,.30);--hl2:rgba(255,175,80,.16);--hl3:rgba(70,120,255,.11);--bloom:rgba(255,120,30,.18)}
+body::before,body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none}
+body::before{background:radial-gradient(60vw 55vh at 6% 108%,var(--amb1),transparent 70%),radial-gradient(48vw 42vh at 100% -6%,var(--amb2),transparent 70%),radial-gradient(42vw 38vh at 72% 58%,var(--amb3),transparent 72%)}
+body::after{background:conic-gradient(from 198deg at 92% -12%,transparent 0deg,var(--ray) 6deg,transparent 13deg,transparent 18deg,var(--ray) 23deg,transparent 31deg,transparent 38deg,var(--ray) 41deg,transparent 47deg,transparent 360deg);
+  -webkit-mask-image:radial-gradient(75% 85% at 92% 0%,#000,transparent 78%);mask-image:radial-gradient(75% 85% at 92% 0%,#000,transparent 78%)}
+.panel{background-image:linear-gradient(180deg,var(--sheen),transparent 42%);box-shadow:var(--shadow),inset 0 1px 0 var(--rim)}
+.aizhero{background:radial-gradient(70% 42% at 50% 112%,var(--hl1),transparent 70%),radial-gradient(34% 24% at 50% 104%,var(--hl2),transparent 70%),radial-gradient(50% 36% at 88% -8%,var(--hl3),transparent 70%),var(--solid)}
+.aizhero::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:conic-gradient(from 330deg at 50% 118%,transparent 0deg,var(--ray) 7deg,transparent 14deg,transparent 22deg,var(--ray) 27deg,transparent 33deg,transparent 40deg,var(--ray) 44deg,transparent 52deg,transparent 360deg);
+  -webkit-mask-image:linear-gradient(0deg,#000,transparent 85%);mask-image:linear-gradient(0deg,#000,transparent 85%)}
+.aizdust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.aizhero > :not(.aizdust){position:relative;z-index:1}
+.aizc{box-shadow:0 18px 50px rgba(0,0,0,.3),0 0 70px var(--bloom),inset 0 1px 0 var(--rim)}
+.aizsend{box-shadow:0 0 18px var(--bloom)}
+.aiztitle b{text-shadow:0 0 28px var(--bloom)}
+.aizpill{box-shadow:0 0 22px var(--bloom)}
 
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.1fr);gap:6px}
@@ -2252,7 +2275,31 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 33;
+const APP_VERSION = 34;
+// Floating amber dust in the AI hero: ~40 slow particles, 30 fps, stops when the hero leaves the page or the tab is hidden
+function heroDust(hero) {
+  const c = document.createElement("canvas"); c.className = "aizdust"; hero.prepend(c);
+  const x = c.getContext("2d"), still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let w = 0, h = 0, last = 0;
+  const P = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), r: .6 + Math.random() * 1.8, v: .00025 + Math.random() * .0006, d: (Math.random() - .5) * .0003, p: Math.random() * 6.28 }));
+  const size = () => { const r = c.getBoundingClientRect(), k = Math.min(devicePixelRatio || 1, 1.5); if (Math.round(r.width * k) !== c.width || Math.round(r.height * k) !== c.height) { c.width = Math.round(r.width * k); c.height = Math.round(r.height * k); } w = c.width; h = c.height; };
+  const draw = t => {
+    size(); x.clearRect(0, 0, w, h);
+    const rgb = getComputedStyle(hero).getPropertyValue("--dust").trim() || "255,170,90";
+    for (const q of P) {
+      if (!still) { q.y -= q.v; q.x += q.d + Math.sin(t / 3000 + q.p) * .0002; if (q.y < -.02) { q.y = 1.02; q.x = Math.random(); } }
+      const a = (.25 + .35 * Math.sin(t / 900 + q.p) ** 2) * (.35 + .65 * q.y), px = q.x * w, py = q.y * h, rr = q.r * (w / c.clientWidth || 1);
+      x.fillStyle = `rgba(${rgb},${a.toFixed(3)})`; x.shadowColor = `rgba(${rgb},.8)`; x.shadowBlur = rr * 4;
+      x.beginPath(); x.arc(px, py, rr, 0, 6.283); x.fill();
+    }
+  };
+  const loop = t => {
+    if (!c.isConnected) return;
+    if (!document.hidden && t - last > 33) { last = t; draw(t); }
+    requestAnimationFrame(loop);
+  };
+  still ? draw(0) : requestAnimationFrame(loop);
+}
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2394,7 +2441,9 @@ function renderAi(){
   // Composer in the style of an AI prompt box: question field, report button, model name and a round send button
   // Chat layout: once a conversation starts, the messages sit above (oldest at the top) and the box stays at the bottom
   const active = ai.reportOn || ai.chat.length > 0;
-  box.closest(".aizhero")?.classList.toggle("aizchat", active);
+  const hero = box.closest(".aizhero");
+  hero?.classList.toggle("aizchat", active);
+  if (hero && !hero.querySelector(".aizdust")) heroDust(hero);
   box.innerHTML = `<div class="aizout" ${active ? "" : "hidden"}>
       <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
       <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
@@ -2895,6 +2944,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=33" defer></script>
+<script src="mascot3d.js?v=34" defer></script>
 </body>
 </html>
