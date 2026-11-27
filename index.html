@@ -26,21 +26,21 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#070708; --panel:rgba(17,17,19,.86); --solid:#131315; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
-  --accent:#f3f3f4; --accent-ink:#0b0b0c; --nav-on:rgba(255,255,255,.08); --nav-on-ink:#ffffff;
-  --inv:#18181b; --inv-ink:#f3f3f4; --inv-muted:#85858d; --inv-line:rgba(255,255,255,.08);
+    --bg:#080503; --panel:rgba(20,13,9,.72); --solid:#0e0906; --ink:#f6f1ec; --muted:#9a8f86; --line:rgba(255,150,80,.12); --soft:#17100b;
+  --accent:#ff6a00; --accent-ink:#140802; --nav-on:rgba(255,106,0,.14); --nav-on-ink:#ffffff;
+  --inv:#140d09; --inv-ink:#f6f1ec; --inv-muted:#9a8f86; --inv-line:rgba(255,150,80,.12);
   --win:#3ee08f; --loss:#ff5d6c; --win-soft:rgba(62,224,143,.1); --loss-soft:rgba(255,93,108,.1); --warn:#f5a524;
-  --chart:#f3f3f4; --c2:#d4d4d8; --c3:#a1a1aa; --c4:#e4e4e7; --glow:rgba(255,255,255,.22); --edge:rgba(255,255,255,.18);
-  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.03),transparent 60%);
+  --chart:#ff7a1a; --c2:#ffa35c; --c3:#c9732e; --c4:#ffd0a8; --glow:rgba(255,106,0,.45); --edge:rgba(255,140,60,.35);
+  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,106,0,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,120,20,.06),transparent 60%);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#070708; --panel:rgba(17,17,19,.86); --solid:#131315; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
-  --accent:#f3f3f4; --accent-ink:#0b0b0c; --nav-on:rgba(255,255,255,.08); --nav-on-ink:#ffffff;
-  --inv:#18181b; --inv-ink:#f3f3f4; --inv-muted:#85858d; --inv-line:rgba(255,255,255,.08);
+  --bg:#080503; --panel:rgba(20,13,9,.72); --solid:#0e0906; --ink:#f6f1ec; --muted:#9a8f86; --line:rgba(255,150,80,.12); --soft:#17100b;
+  --accent:#ff6a00; --accent-ink:#140802; --nav-on:rgba(255,106,0,.14); --nav-on-ink:#ffffff;
+  --inv:#140d09; --inv-ink:#f6f1ec; --inv-muted:#9a8f86; --inv-line:rgba(255,150,80,.12);
   --win:#3ee08f; --loss:#ff5d6c; --win-soft:rgba(62,224,143,.1); --loss-soft:rgba(255,93,108,.1); --warn:#f5a524;
-  --chart:#f3f3f4; --c2:#d4d4d8; --c3:#a1a1aa; --c4:#e4e4e7; --glow:rgba(255,255,255,.22); --edge:rgba(255,255,255,.18);
-  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.03),transparent 60%);
+  --chart:#ff7a1a; --c2:#ffa35c; --c3:#c9732e; --c4:#ffd0a8; --glow:rgba(255,106,0,.45); --edge:rgba(255,140,60,.35);
+  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,106,0,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,120,20,.06),transparent 60%);
 }
 *{box-sizing:border-box}
 html{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.35) transparent;color-scheme:light}
@@ -299,17 +299,20 @@ tbody tr.click:hover{background:var(--soft)}
 @media (max-width:700px){.aizhero{padding:36px 14px 30px;min-height:calc(100vh - 90px)}.aizsub{font-size:14px}}
 /* Cinematic lighting: warm amber ambient glow with a hint of blue, soft rays, glass sheen on panels, bloom on key elements.
    Static layers only (no animation behind blurred panels) so scrolling stays smooth. */
-:root{--amb1:rgba(255,140,50,.09);--amb2:rgba(255,190,120,.10);--amb3:rgba(90,140,255,.05);--ray:rgba(255,190,130,.06);--sheen:rgba(255,175,100,.05);--rim:rgba(255,255,255,.7);
-  --hl1:rgba(255,130,40,.16);--hl2:rgba(255,190,110,.12);--hl3:rgba(90,140,255,.07);--bloom:rgba(255,130,40,.14);--dust:255,170,90}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--amb1:rgba(255,110,20,.16);--amb2:rgba(255,160,70,.07);--amb3:rgba(70,120,255,.07);--ray:rgba(255,170,90,.045);--sheen:rgba(255,150,70,.04);--rim:rgba(255,200,150,.09);
-  --hl1:rgba(255,115,25,.30);--hl2:rgba(255,175,80,.16);--hl3:rgba(70,120,255,.11);--bloom:rgba(255,120,30,.18)}}
-:root[data-theme="dark"]{--amb1:rgba(255,110,20,.16);--amb2:rgba(255,160,70,.07);--amb3:rgba(70,120,255,.07);--ray:rgba(255,170,90,.045);--sheen:rgba(255,150,70,.04);--rim:rgba(255,200,150,.09);
-  --hl1:rgba(255,115,25,.30);--hl2:rgba(255,175,80,.16);--hl3:rgba(70,120,255,.11);--bloom:rgba(255,120,30,.18)}
+:root{--amb1:rgba(255,120,30,.10);--amb2:rgba(255,180,100,.10);--amb3:rgba(255,200,130,.06);--ray:rgba(255,170,100,.06);--sheen:rgba(255,160,90,.05);--rim:rgba(255,255,255,.7);--crest:rgba(255,106,0,.08);
+  --hl1:rgba(255,120,30,.18);--hl2:rgba(255,180,100,.12);--hl3:rgba(255,190,120,.08);--bloom:rgba(255,106,0,.14);--dust:255,150,60}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--amb1:rgba(255,106,0,.22);--amb2:rgba(255,140,40,.10);--amb3:rgba(255,180,90,.05);--ray:rgba(255,130,40,.06);--sheen:rgba(255,120,40,.06);--rim:rgba(255,150,80,.16);--crest:rgba(255,106,0,.20);
+  --hl1:rgba(255,106,0,.45);--hl2:rgba(255,170,80,.24);--hl3:rgba(255,130,40,.10);--bloom:rgba(255,106,0,.28)}}
+:root[data-theme="dark"]{--amb1:rgba(255,106,0,.22);--amb2:rgba(255,140,40,.10);--amb3:rgba(255,180,90,.05);--ray:rgba(255,130,40,.06);--sheen:rgba(255,120,40,.06);--rim:rgba(255,150,80,.16);--crest:rgba(255,106,0,.20);
+  --hl1:rgba(255,106,0,.45);--hl2:rgba(255,170,80,.24);--hl3:rgba(255,130,40,.10);--bloom:rgba(255,106,0,.28)}
 body::before,body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none}
 body::before{background:radial-gradient(60vw 55vh at 6% 108%,var(--amb1),transparent 70%),radial-gradient(48vw 42vh at 100% -6%,var(--amb2),transparent 70%),radial-gradient(42vw 38vh at 72% 58%,var(--amb3),transparent 72%)}
 body::after{background:conic-gradient(from 198deg at 92% -12%,transparent 0deg,var(--ray) 6deg,transparent 13deg,transparent 18deg,var(--ray) 23deg,transparent 31deg,transparent 38deg,var(--ray) 41deg,transparent 47deg,transparent 360deg);
   -webkit-mask-image:radial-gradient(75% 85% at 92% 0%,#000,transparent 78%);mask-image:radial-gradient(75% 85% at 92% 0%,#000,transparent 78%)}
-.panel{background-image:linear-gradient(180deg,var(--sheen),transparent 42%);box-shadow:var(--shadow),inset 0 1px 0 var(--rim)}
+.panel{background-image:radial-gradient(55% 70px at 50% 0%,var(--crest),transparent 100%),linear-gradient(180deg,var(--sheen),transparent 42%);box-shadow:var(--shadow),inset 0 1px 0 var(--rim)}
+.btn:not(.ghost){background-image:linear-gradient(180deg,rgba(255,255,255,.16),transparent 60%);box-shadow:0 0 22px var(--bloom)}
+.nav.on,.nbitem.on{box-shadow:inset 0 0 0 1px var(--crest),0 0 18px var(--crest)}
+.aizsend{background:var(--accent);color:var(--accent-ink)}
 .aizhero{background:radial-gradient(70% 42% at 50% 112%,var(--hl1),transparent 70%),radial-gradient(34% 24% at 50% 104%,var(--hl2),transparent 70%),radial-gradient(50% 36% at 88% -8%,var(--hl3),transparent 70%),var(--solid)}
 .aizhero::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:conic-gradient(from 330deg at 50% 118%,transparent 0deg,var(--ray) 7deg,transparent 14deg,transparent 22deg,var(--ray) 27deg,transparent 33deg,transparent 40deg,var(--ray) 44deg,transparent 52deg,transparent 360deg);
@@ -2275,7 +2278,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 34;
+const APP_VERSION = 35;
 // Floating amber dust in the AI hero: ~40 slow particles, 30 fps, stops when the hero leaves the page or the tab is hidden
 function heroDust(hero) {
   const c = document.createElement("canvas"); c.className = "aizdust"; hero.prepend(c);
@@ -2944,6 +2947,6 @@ load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
 if(!profile) showOnboarding(); else showWelcome();
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=34" defer></script>
+<script src="mascot3d.js?v=35" defer></script>
 </body>
 </html>
