@@ -2202,7 +2202,7 @@ document.addEventListener("change", async e => {
 const FB_AI_VER = "13.2.0";
 const AI_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]; // the second is used when the first fails or is busy
 const AI_ON = true;             // true once Firebase AI Logic is switched on in the Firebase console
-const APPCHECK_SITE_KEY = "6LdacDQuAAAAAOc_tQ8hMbjpMly9ZbCtdMkBwk7M"; // public reCAPTCHA v3 site key; App Check is enforced for AI Logic
+const APPCHECK_SITE_KEY = "6LeuWDQuAAAAAAbe8JtDGTO2k5cGj6mG3njsJFkp"; // public Fraud Defense (reCAPTCHA Enterprise) site key in itachi-journaling; App Check is enforced for AI Logic
 const ai = {state: "ready", report: "", reportOn: false, chat: []};
 let aiApp = null, aiCheck = false;
 async function aiModel(idx, system){
