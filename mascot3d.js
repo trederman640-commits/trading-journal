@@ -116,6 +116,9 @@
   #m3.m3-docked{position:relative;left:auto !important;top:auto !important;bottom:auto !important;width:100%;height:150px;z-index:auto}
   #m3.m3-docked .m3-chat,#m3.m3-docked .m3-say{bottom:0;left:auto;right:auto;inset-inline-start:calc(100% + 22px)}
   #m3.m3-docked [data-a=move]{display:none}
+  /* In the card the buttons sit at the bottom, under the feet, so they never cover the head */
+  #m3.m3-docked .m3-bar{top:auto;bottom:2px;left:50%;transform:translateX(-50%)}
+  #m3.m3-docked .m3-menu{top:auto;bottom:34px;left:50%;transform:translateX(-50%)}
   #m3.m3-docked.m3-mini{height:150px;width:100%}
   @media (max-width:700px){#m3{width:96px;height:114px;left:6px;bottom:6px}.m3-chat{width:calc(100vw - 16px)}}`;
   const st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
@@ -280,7 +283,7 @@
     model.position.set(-ctr.x, -b2.min.y, -ctr.z);
     pivot.add(model); pivot.position.set(0, 0, 0); pivot.rotation.set(0, 0, 0); pivot.userData.act = null;
     // Camera framing and zoom limits
-    const dist = 1.6 / 2 / Math.tan(cam.fov * Math.PI / 360) * 1.25;
+    const dist = 1.6 / 2 / Math.tan(cam.fov * Math.PI / 360) * 1.42;   // room for horns and ears at the top
     home = {pos: new THREE.Vector3(0, .95, dist), target: new THREE.Vector3(0, .78, 0)};
     cam.position.copy(home.pos); controls.target.copy(home.target);
     controls.minDistance = dist * .55; controls.maxDistance = dist * 1.6; controls.update();
