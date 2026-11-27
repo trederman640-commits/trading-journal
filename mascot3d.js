@@ -12,23 +12,23 @@
       // App colours that match the character (only backgrounds and lines; green/red for profit and loss stay)
       theme: {dark: {bg: "#070a16", panel: "rgba(16,20,40,.86)", solid: "#11152b", soft: "#171c36", line: "rgba(130,150,255,.13)", muted: "#8b90a8"},
         light: {bg: "#e4e9f8", panel: "rgba(250,251,255,.8)", solid: "#f8f9ff", soft: "#edf0fb", line: "rgba(40,60,160,.1)", muted: "#6f7590"}},
-      persona: "أنت «يوكي»، روح صغيرة ديال الثلج، لطيفة وهادئة، كتعاون متداول يفهم نتائجو. كتهضر بالدارجة بحنان وبجمل قصيرة، وكتشجّع على الهدوء والانضباط.", particle: 0xd6e6ff, lines: {
-      hi: [["سلام! أنا يوكي ❄️ كليكي عليّ إلا بغيتي شي حاجة.", "Hi! I'm Yuki ❄️ Click me if you need anything."]],
-      tap: [["هيهي، يدّك باردة بحالي 🥶", "Hehe, your hand is as cold as me 🥶"], ["❄️ بقا هادئ ومنظّم، أنا معاك.", "❄️ Stay calm and disciplined, I'm with you."],
-        ["واش شربتي شي حاجة سخونة قبل ما تبدا؟ ☕", "Had something warm before trading? ☕"]],
-      win: [["ياي! ❄️✨ ربحة نقية بحال الثلج!", "Yay! ❄️✨ A clean win, pure as snow!"], ["الثلج كيشطح معاك! بقا على نفس الخطة.", "The snow dances with you! Keep the same plan."]],
-      loss: [["ما تقلقش… حتى الثلج كيذوب وكيرجع 🌨️", "Don't worry… even snow melts and comes back 🌨️"], ["خود نفس بارد، والصفقة الجاية بهدوء.", "Take a cool breath, the next trade calmly."]]}},
+      persona: "أنت «يوكي»، روح ثلجية صغيرة لطيفة وهادئة، تساعد متداولاً على فهم نتائجه. تتكلم بحنان وبجمل قصيرة، وتشجّع على الهدوء والانضباط.", particle: 0xd6e6ff, lines: {
+      hi: [["مرحباً! أنا يوكي ❄️ اضغط عليّ إن احتجت شيئاً.", "Hi! I'm Yuki ❄️ Click me if you need anything."]],
+      tap: [["هيهي، يدك باردة مثلي 🥶", "Hehe, your hand is as cold as me 🥶"], ["❄️ ابقَ هادئاً ومنظّماً، أنا معك.", "❄️ Stay calm and disciplined, I'm with you."],
+        ["هل شربت شيئاً دافئاً قبل أن تبدأ؟ ☕", "Had something warm before trading? ☕"]],
+      win: [["رائع! ❄️✨ ربح نقي كالثلج!", "Yay! ❄️✨ A clean win, pure as snow!"], ["الثلج يرقص معك! حافظ على الخطة نفسها.", "The snow dances with you! Keep the same plan."]],
+      loss: [["لا تقلق… حتى الثلج يذوب ثم يعود 🌨️", "Don't worry… even snow melts and comes back 🌨️"], ["خذ نفساً هادئاً، والصفقة القادمة بتأنٍّ.", "Take a cool breath, the next trade calmly."]]}},
     {id: "ember", name: "Ember", url: "models/ember.glb", art: 1, glow: 0xff3040, float: true, particle: 0xff5a3c,
       // Dark face with glowing eyes: lids are the face colour and expressions are drawn in light
       face: {eyes: [[-.075, .96], [.105, .96]], eyeR: .064, skin: "#0b0709", ink: "#ffe3e3"},
       theme: {dark: {bg: "#0d0607", panel: "rgba(30,14,16,.86)", solid: "#1a0c0e", soft: "#231114", line: "rgba(255,90,90,.13)", muted: "#a88b8e"},
         light: {bg: "#f6e6e7", panel: "rgba(255,250,250,.8)", solid: "#fff8f8", soft: "#fbeeee", line: "rgba(160,30,40,.1)", muted: "#8a6f72"}},
-      persona: "أنت «إمبر»، روح نارية صغيرة بقرون، مدرّب صارم ولكن عادل، كتهضر بالدارجة بجمل قصيرة ومباشرة على الانضباط واحترام الستوب، بلا ما تكون قاسي.",
+      persona: "أنت «إمبر»، روح نارية صغيرة بقرنين، مدرّب صارم لكنه عادل، تتكلم بجمل قصيرة ومباشرة عن الانضباط واحترام وقف الخسارة، دون قسوة.",
       lines: {
         hi: [["إمبر هنا 🔥 الانضباط قبل الربح.", "Ember here 🔥 Discipline before profit."]],
-        tap: [["🔥 واش الخطة ديال اليوم واجدة؟", "🔥 Is today's plan ready?"], ["ما كاينش دخول بلا ستوب. مفهوم؟", "No entry without a stop. Clear?"]],
-        win: [["🔥 هاكا! نار منضبطة.", "🔥 That's it! Disciplined fire."], ["ربحة مزيانة. ما تكبّرش الحجم بسبب الحماس.", "Good win. Don't size up out of excitement."]],
-        loss: [["الخسارة كتعلّم. شنو الغلطة؟ كتبها.", "Losses teach. What was the mistake? Write it down."], ["طفّي النار شوية، والصفقة الجاية بالخطة.", "Cool the fire, next trade by the plan."]]}},
+        tap: [["🔥 هل خطة اليوم جاهزة؟", "🔥 Is today's plan ready?"], ["لا دخول بدون وقف خسارة. مفهوم؟", "No entry without a stop. Clear?"]],
+        win: [["🔥 هكذا! نار منضبطة.", "🔥 That's it! Disciplined fire."], ["ربح جيد. لا تكبّر الحجم بدافع الحماس.", "Good win. Don't size up out of excitement."]],
+        loss: [["الخسارة تُعلّم. ما الخطأ؟ اكتبه.", "Losses teach. What was the mistake? Write it down."], ["أطفئ النار قليلاً، والصفقة القادمة حسب الخطة.", "Cool the fire, next trade by the plan."]]}},
     {id: "geeko", name: "Geeko", url: "models/geeko.glb", art: 2, glow: 0x9cff3a},
     {id: "dark", name: "Dark Ascendant", url: "models/dark.glb", art: 3, glow: 0xa060ff},
   ].filter(c => ["yuki", "ember"].includes(c.id));   // only characters whose 3D model is ready are offered (Geeko, Dark Ascendant: models still to make)
@@ -113,7 +113,8 @@
   /* Docked in the sidebar on wide screens: a companion card that is part of the app */
   .m3-dock{margin-top:12px;border:1px solid var(--line,#26262e);border-radius:20px;background:rgba(127,127,140,.06);padding:4px 8px 10px;position:relative}
   .m3-dock .m3-dn{display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;padding:0 4px}
-  .m3-dock .m3-dname{font-size:13px}
+  .m3-dock .m3-dname{font-size:19px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase}
+  .m3-dock .m3-dn .m3-dst{display:none}   /* the card shows only the name */
   .m3-dock .m3-dst{font-size:11.5px;color:var(--muted,#8a8a95);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.9em}
   body.m3-docked-on #side{position:relative;z-index:15}
   #m3.m3-docked{position:relative;left:auto !important;top:auto !important;bottom:auto !important;width:100%;height:150px;z-index:auto}
@@ -128,12 +129,12 @@
   const box = document.createElement("div"); box.id = "m3";
   box.innerHTML = `<div class="m3-chat"><div class="m3-ch"><b class="m3-name"></b><div class="m3-tabs"><button data-t="chat" class="on">${T("دردشة", "Chat")}</button><button data-t="mood">${T("إحساسي", "Mood")}</button></div><button class="m3-x2" data-a="close">✕</button></div>
       <div class="m3-log"></div><div class="m3-sug"></div>
-      <div class="m3-in"><input maxlength="300" placeholder="${T("سول على صفقاتك...", "Ask about your trades...")}"><button>${T("إرسال", "Send")}</button></div>
-      <div class="m3-mood"><div>${T("كيفاش حاس دابا؟", "How do you feel right now?")}</div><div class="m3-feel"></div>
-        <textarea placeholder="${T("شنو اللي فبالك؟ (اختياري)", "What's on your mind? (optional)")}"></textarea><button class="m3-save">${T("حفظ", "Save")}</button></div></div>
+      <div class="m3-in"><input maxlength="300" placeholder="${T("اسأل عن صفقاتك...", "Ask about your trades...")}"><button>${T("إرسال", "Send")}</button></div>
+      <div class="m3-mood"><div>${T("كيف تشعر الآن؟", "How do you feel right now?")}</div><div class="m3-feel"></div>
+        <textarea placeholder="${T("ما الذي يشغل بالك؟ (اختياري)", "What's on your mind? (optional)")}"></textarea><button class="m3-save">${T("حفظ", "Save")}</button></div></div>
     <div class="m3-glow"></div><div class="m3-sym"></div><div class="m3-think"><i></i><i></i><i></i></div><div class="m3-say" id="m3Say"></div><canvas></canvas><div class="m3-fb"></div><div class="m3-note"></div><div class="m3-load">…</div>
-    <div class="m3-bar"><button data-a="menu" title="${T("بدّل الشخصية", "Change character")}">☰</button><button data-a="reset" title="${T("رجّع الزاوية", "Reset view")}">⟲</button>
-      <button data-a="chat" title="${T("المحلل الذكي", "AI Analyst")}">✦</button><button data-a="move" title="${T("حرّك", "Move")}">✥</button><button data-a="mini" title="${T("صغّر", "Minimise")}">–</button></div>
+    <div class="m3-bar"><button data-a="menu" title="${T("تغيير الشخصية", "Change character")}">☰</button><button data-a="reset" title="${T("إعادة الزاوية", "Reset view")}">⟲</button>
+      <button data-a="chat" title="${T("المحلل الذكي", "AI Analyst")}">✦</button><button data-a="move" title="${T("تحريك", "Move")}">✥</button><button data-a="mini" title="${T("تصغير", "Minimise")}">–</button></div>
     <div class="m3-menu"></div>`;
   document.body.appendChild(box);
   const canvas = box.querySelector("canvas"), say = box.querySelector(".m3-say"), menu = box.querySelector(".m3-menu"), fb = box.querySelector(".m3-fb"), note = box.querySelector(".m3-note"), chatEl = box.querySelector(".m3-chat");
@@ -194,10 +195,10 @@
   }
   function line(){
     const s = stats();
-    if(!s.n) return T("سجّل أول صفقة ونبداو 🙂", "Log your first trade and we'll start 🙂");
+    if(!s.n) return T("سجّل أول صفقة لنبدأ 🙂", "Log your first trade and we'll start 🙂");
     const a = [T(`نسبة الربح: <b>${s.wr.toFixed(0)}%</b> على ${s.n} صفقة.`, `Win rate: <b>${s.wr.toFixed(0)}%</b> over ${s.n} trades.`),
-      s.todayN ? T(`اليوم: <b>${money(s.today)}</b> فـ${s.todayN} صفقة.`, `Today: <b>${money(s.today)}</b> over ${s.todayN} trades.`) : T("مازال ما سجّلتي حتى صفقة اليوم.", "No trades logged today yet."),
-      T("بغيتي تحليل؟ كليكي على ✦", "Want an analysis? Click ✦")];
+      s.todayN ? T(`اليوم: <b>${money(s.today)}</b> فـ${s.todayN} صفقة.`, `Today: <b>${money(s.today)}</b> over ${s.todayN} trades.`) : T("لم تسجّل أي صفقة اليوم بعد.", "No trades logged today yet."),
+      T("تريد تحليلاً؟ اضغط ✦", "Want an analysis? Click ✦")];
     return a[Math.floor(Math.random() * a.length)];
   }
 
@@ -206,7 +207,7 @@
     box.classList.remove("m3-loading");
     box.classList.add("m3-fallback");
     if(c.art != null){ fb.style.backgroundPosition = `${(c.art % 2) * 100}% ${Math.floor(c.art / 2) * 100}%`; fb.style.display = ""; } else fb.style.display = "none";
-    note.textContent = why === "webgl" ? T("المتصفح ما كيدعمش 3D", "3D is not supported here") : T(`صورة مؤقتة: الموديل 3D ديال ${c.name} ناقص`, `Placeholder: ${c.name}'s 3D model is missing`);
+    note.textContent = why === "webgl" ? T("المتصفح لا يدعم 3D", "3D is not supported here") : T(`صورة مؤقتة: نموذج ${c.name} ثلاثي الأبعاد غير متوفر`, `Placeholder: ${c.name}'s 3D model is missing`);
   }
 
   /* ---------- 3D ---------- */
@@ -261,7 +262,7 @@
       Object.assign(controls, {enablePan: false, enableDamping: true, dampingFactor: .08, rotateSpeed: .7, zoomSpeed: .6,
         minPolarAngle: Math.PI * .25, maxPolarAngle: Math.PI * .55});
       controls.addEventListener("start", () => { box.classList.add("m3-drag"); idleBackT = 0; });
-      controls.addEventListener("end", () => { box.classList.remove("m3-drag"); idleBackT = 4; });
+      controls.addEventListener("end", () => { box.classList.remove("m3-drag"); idleBackT = .2; });   // back to the front view right after letting go
       new ResizeObserver(resize).observe(box); resize();
       hookPointer();
       await show(cur);
@@ -274,7 +275,7 @@
 
   async function show(c){
     cur = c; store.set("m3-char", c.id); buildMenu();
-    dock.querySelector(".m3-dname").textContent = c.name; if(typeof applyTheme === "function") applyTheme(); status(T("معاك فكل صفقة. كليكي عليّ باش نهضرو.", "With you on every trade. Click me to chat."));
+    dock.querySelector(".m3-dname").textContent = c.name; if(typeof applyTheme === "function") applyTheme(); status(T("معك في كل صفقة. اضغط عليّ لنتحدث.", "With you on every trade. Click me to chat."));
     box.classList.remove("m3-fallback"); box.classList.add("m3-loading");
     let gltf;
     try{ gltf = cache[c.id] ||= await loader.loadAsync(c.url); }
@@ -468,9 +469,9 @@
       big = c.length > 4 && last && Math.abs(pnl(last)) > avg * 2; }catch(e){}
     const feel = (k, secs) => { if(big && face){ expr("surprised", 1.6); face.after = k; setTimeout(() => expr(k, secs), 1600); } else expr(k, secs); };
     if(kind === "win"){ play(actions.happy ? "happy" : "win2", true); snow && emit("burst"); feel("happy", 3);
-      speak(own?.win ? pickLine(own.win) : T("ربحة زوينة! 🎉 خليك على نفس الخطة.", "Nice win! 🎉 Stick to the plan.")); }
+      speak(own?.win ? pickLine(own.win) : T("ربح جميل! 🎉 حافظ على خطتك.", "Nice win! 🎉 Stick to the plan.")); }
     else if(kind === "loss"){ play("sad", true); snow && emit("fall"); feel("sad", 4);
-      speak(own?.loss ? pickLine(own.loss) : T("الخسارة جزء من اللعبة. واش احترمتي الستوب؟", "Losses are part of the game. Did you respect your stop?")); }
+      speak(own?.loss ? pickLine(own.loss) : T("الخسارة جزء من اللعبة. هل احترمت وقف الخسارة؟", "Losses are part of the game. Did you respect your stop?")); }
     else play("idle");
   }
 
@@ -530,7 +531,7 @@
     }
     // Drift back to the front view a few seconds after the user lets go
     if(idleBackT > 0){ idleBackT -= step; if(idleBackT <= 0) idleBackT = -1; }
-    if(idleBackT < 0 && home){ cam.position.lerp(home.pos, Math.min(1, step * 2)); controls.target.lerp(home.target, Math.min(1, step * 2)); if(cam.position.distanceTo(home.pos) < .01) idleBackT = 0; }
+    if(idleBackT < 0 && home){ cam.position.lerp(home.pos, Math.min(1, step * 5)); controls.target.lerp(home.target, Math.min(1, step * 5)); if(cam.position.distanceTo(home.pos) < .01) idleBackT = 0; }
     controls.update();
     renderer.render(scene, cam);
   }
@@ -562,7 +563,7 @@
   /* ---------- chat with the AI analyst (Gemini, same setup as the AI Analyst page) and mood check-in ---------- */
   const chatBox = chatEl, log = chatEl.querySelector(".m3-log"), qIn = chatEl.querySelector(".m3-in input");
   const chat = {msgs: [], busy: false};
-  const FEELS = [["😌", "هادئ", "Calm", "calm"], ["💪", "واثق", "Confident", "calm"], ["😰", "خايف", "Anxious", "bad"], ["🤑", "طمعان", "Greedy", "bad"], ["😤", "معصّب", "Frustrated", "bad"], ["😴", "عيّان", "Tired", "bad"]];
+  const FEELS = [["😌", "هادئ", "Calm", "calm"], ["💪", "واثق", "Confident", "calm"], ["😰", "قلق", "Anxious", "bad"], ["🤑", "طمّاع", "Greedy", "bad"], ["😤", "متوتر", "Frustrated", "bad"], ["😴", "متعب", "Tired", "bad"]];
   let feel = null;
   const fmt = t => typeof fmtAi === "function" ? fmtAi(t) : String(t).replace(/[&<>]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;"}[c]));
   function renderChat(){
@@ -570,7 +571,7 @@
     log.innerHTML = chat.msgs.map(m => m.content ? `<div class="m3-m ${m.role}">${fmt(m.content)}${m.actions && m.actions.length ? `<div class="m3-acts">${m.actions.map(([d, t]) => `<button data-do="${d}">${t}</button>`).join("")}</div>` : ""}</div>`
       : `<div class="m3-m assistant m3-typing"><i></i><i></i><i></i></div>`).join("");
     log.scrollTop = log.scrollHeight;
-    chatBox.querySelector(".m3-sug").innerHTML = chat.msgs.length > 2 ? "" : [T("علاش كنخسر؟", "Why am I losing?"), T("حلّل ليا اليوم", "Analyse my day"), T("شنو نبدّل هاد السيمانة؟", "What should I change this week?")]
+    chatBox.querySelector(".m3-sug").innerHTML = chat.msgs.length > 2 ? "" : [T("لماذا أخسر؟", "Why am I losing?"), T("حلّل يومي", "Analyse my day"), T("ماذا أغيّر هذا الأسبوع؟", "What should I change this week?")]
       .map(q => `<button data-q="${q}">${q}</button>`).join("");
     chatBox.querySelector(".m3-feel").innerHTML = FEELS.map((f, i) => `<button data-f="${i}" class="${feel === i ? "on" : ""}">${f[0]} ${T(f[1], f[2])}</button>`).join("");
   }
@@ -590,17 +591,17 @@
   function setTheme(on){
     store.set("m3-theme", on ? "on" : "off"); applyTheme();
     chat.msgs.push({role: "assistant", content: on
-      ? T("✨ تبدّل! دابا التطبيق بالألوان ديالي. إلا بغيتي ترجع، قولّي «رجّع الشكل القديم» ولا كليكي على الزر.", "✨ Done! The app now wears my colours. To go back, say «old look» or press the button.")
-      : T("رجّعت ليك الشكل القديم ديال التطبيق 👌", "Back to the original look 👌"),
-      actions: on ? [["theme-off", T("رجّع الشكل القديم", "Old look")]] : []});
+      ? T("✨ تم! التطبيق الآن بألواني. للعودة، اكتب «أعد الشكل القديم» أو اضغط الزر.", "✨ Done! The app now wears my colours. To go back, say «old look» or press the button.")
+      : T("أعدت الشكل القديم للتطبيق 👌", "Back to the original look 👌"),
+      actions: on ? [["theme-off", T("أعد الشكل القديم", "Old look")]] : []});
     expr("happy", 1.5); act("tap"); renderChat();
   }
   function offerTheme(){
     if(!cur?.theme || store.get("m3-theme-asked")) return;
     store.set("m3-theme-asked", "1");
-    chat.msgs.push({role: "assistant", content: T("IZUMI EDGE AI ✨ بغيتي نبدّل ألوان التطبيق باش تجي متناسقة مع " + cur.name + "؟ الأخضر والأحمر ديال الربح والخسارة كيبقاو كيف ما هوما، وتقدر ترجع للشكل القديم فأي وقت.",
+    chat.msgs.push({role: "assistant", content: T("IZUMI EDGE AI ✨ هل تريد أن أغيّر ألوان التطبيق لتتناسق مع " + cur.name + "؟ يبقى الأخضر والأحمر للربح والخسارة كما هما، ويمكنك العودة للشكل القديم في أي وقت.",
       "IZUMI EDGE AI ✨ Want me to recolour the app to match " + cur.name + "? Profit and loss colours stay the same, and you can go back any time."),
-      actions: [["theme-on", T("واخا، بدّل", "Yes, change it")], ["theme-no", T("لا، شكراً", "No, thanks")]]});
+      actions: [["theme-on", T("نعم، غيّر", "Yes, change it")], ["theme-no", T("لا، شكراً", "No, thanks")]]});
   }
   applyTheme();
 
@@ -617,10 +618,10 @@
     chat.msgs.push({role: "user", content: q}, {role: "assistant", content: ""}); chat.busy = true; renderChat();
     thinking(true);
     const F = typeof coachFacts === "function" ? coachFacts() : null;
-    const facts = F ? F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n") : T("- المتداول مازال ما عندوش صفقات كافية (أقل من 5).", "- Not enough closed trades yet (fewer than 5).");
+    const facts = F ? F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n") : T("- ليس لدى المتداول صفقات كافية بعد (أقل من 5).", "- Not enough closed trades yet (fewer than 5).");
     const md = typeof days === "object" && days[today()]?.mood;
     const sys = `${cur?.persona || ""}\n${T("هذه الحقائق محسوبة من صفقات المتداول:", "Facts computed from the trader's trades:")}\n${facts}\n${md ? T("إحساس المتداول اليوم: ", "Trader's mood today: ") + md.feel + (md.note ? " — " + md.note : "") : ""}\n` +
-      T("القواعد: اكتب بالدارجة المغربية البسيطة وبجمل قصيرة (3 إلى 5 جمل). استعمل الأرقام المعطاة فقط. لا توصيات شراء أو بيع ولا توقعات أسعار. ركّز على السلوك والانضباط وإدارة المخاطر.",
+      T("القواعد: اكتب بالعربية الفصحى البسيطة وبجمل قصيرة (3 إلى 5 جمل). إذا كتب لك المستخدم بالدارجة أو بأي لغة أخرى فأجبه بنفس لغته. استعمل الأرقام المعطاة فقط. لا توصيات شراء أو بيع ولا توقعات أسعار. ركّز على السلوك والانضباط وإدارة المخاطر.",
         "Rules: reply in simple short sentences (3 to 5). Use only the given numbers. No buy/sell advice or price predictions. Focus on behaviour, discipline and risk.");
     const history = chat.msgs.slice(0, -2).slice(-6).map(m => ({role: m.role === "user" ? "user" : "model", parts: [{text: m.content}]}));
     while(history.length && history[0].role !== "user") history.shift();
@@ -635,7 +636,7 @@
           for await (const ch of res.stream){ out += ch.text(); show(); } break; }
         catch(e){ if(out || idx === AI_MODELS.length - 1) throw e; }
       }
-    }catch(e){ console.warn("mascot chat", e); out += (out ? "\n\n" : "") + (typeof aiErrText === "function" ? aiErrText(e) : T("الذكاء الاصطناعي ما متاحش دابا.", "The AI is not available right now.")); show(); }
+    }catch(e){ console.warn("mascot chat", e); out += (out ? "\n\n" : "") + (typeof aiErrText === "function" ? aiErrText(e) : T("الذكاء الاصطناعي غير متاح الآن.", "The AI is not available right now.")); show(); }
     chat.busy = false; thinking(false); renderChat();
   }
   // While waiting for the AI: hand to the chin, eyes looking up, and a thought bubble with dots
@@ -654,7 +655,7 @@
     if(t.dataset.do){ t.closest(".m3-acts").remove(); chat.msgs.forEach(m => { if(m.actions) m.actions = []; });
       if(t.dataset.do === "theme-on") setTheme(true);
       else if(t.dataset.do === "theme-off") setTheme(false);
-      else { chat.msgs.push({role: "assistant", content: T("ماشي مشكل! إلا بدّلتي رأيك، قولّي «بدّل الألوان».", "No problem! If you change your mind, just say «change colours».")}); renderChat(); } }
+      else { chat.msgs.push({role: "assistant", content: T("لا مشكلة! إن غيّرت رأيك، اكتب «غيّر الألوان».", "No problem! If you change your mind, just say «change colours».")}); renderChat(); } }
     if(t.dataset.a === "close") openChat(false);
     if(t.dataset.t){ chatBox.classList.toggle("mood", t.dataset.t === "mood"); chatBox.querySelectorAll(".m3-tabs button").forEach(b => b.classList.toggle("on", b === t)); }
     if(t.dataset.f != null){ feel = +t.dataset.f; renderChat(); }
@@ -664,8 +665,8 @@
       days[d] = {...(days[d] || {}), mood: {feel: f[2], note, at: Date.now()}}; saveAll();
       chatBox.classList.remove("mood"); chatBox.querySelectorAll(".m3-tabs button").forEach((b, i) => b.classList.toggle("on", i === 0));
       const good = f[3] === "calm";
-      chat.msgs.push({role: "assistant", content: good ? T("مزيان! خليك على هاد الحالة وتبّع الخطة ديالك 👌", "Great! Keep this state and follow your plan 👌")
-        : T("شكراً على الصراحة. فهاد الحالة، الأحسن تنقّص الحجم ولا تاخد راحة قبل الصفقة الجاية.", "Thanks for being honest. In this state it's better to size down or take a break before the next trade.")});
+      chat.msgs.push({role: "assistant", content: good ? T("ممتاز! حافظ على هذه الحالة واتبع خطتك 👌", "Great! Keep this state and follow your plan 👌")
+        : T("شكراً على صراحتك. في هذه الحالة، الأفضل أن تقلّل الحجم أو تأخذ استراحة قبل الصفقة القادمة.", "Thanks for being honest. In this state it's better to size down or take a break before the next trade.")});
       expr(good ? "happy" : "sad", 2.5); act(good ? "tap" : "loss"); chatBox.querySelector(".m3-mood textarea").value = ""; feel = null; renderChat();
     }
   });
@@ -690,9 +691,9 @@
     if(!greet) return;
     const amt = typeof money === "function" ? money(m.v) : m.v.toFixed(2);
     if(m.kind === "win"){ expr("happy", 2.5); act("tap");
-      speak(m.why === "today" ? T(`نهار زوين! ✨ <b>${amt}</b> اليوم. خليك منضبط.`, `Good day! ✨ <b>${amt}</b> today. Stay disciplined.`) : T(`آخر صفقاتك مزيانين (<b>${amt}</b>). كمّل بنفس الخطة.`, `Your last trades look good (<b>${amt}</b>). Same plan.`), 6000); }
+      speak(m.why === "today" ? T(`يوم جميل! ✨ <b>${amt}</b> اليوم. ابقَ منضبطاً.`, `Good day! ✨ <b>${amt}</b> today. Stay disciplined.`) : T(`صفقاتك الأخيرة جيدة (<b>${amt}</b>). واصل بالخطة نفسها.`, `Your last trades look good (<b>${amt}</b>). Same plan.`), 6000); }
     else if(m.kind === "loss"){ expr("sad", 3); act("loss");
-      speak(m.why === "today" ? T(`اليوم صعيب شوية (<b>${amt}</b>). خود نفس، وما تحاولش ترجّعها بزربة.`, `Tough day (<b>${amt}</b>). Breathe, don't rush to win it back.`) : T(`آخر صفقاتك فالخسارة (<b>${amt}</b>). نقّص الحجم حتى ترجع الثقة.`, `Your last trades are red (<b>${amt}</b>). Size down until confidence is back.`), 6000); }
+      speak(m.why === "today" ? T(`اليوم صعب قليلاً (<b>${amt}</b>). خذ نفساً، ولا تحاول التعويض بسرعة.`, `Tough day (<b>${amt}</b>). Breathe, don't rush to win it back.`) : T(`صفقاتك الأخيرة خاسرة (<b>${amt}</b>). قلّل الحجم حتى تعود الثقة.`, `Your last trades are red (<b>${amt}</b>). Size down until confidence is back.`), 6000); }
   }
   // Developer helper to find a new character's eyes: brightness of the texture at a point on the fitted model
   let probeCtx = null;
