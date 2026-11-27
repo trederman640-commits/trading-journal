@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Itachi Journaling",
-  "short_name": "Itachi Journal",
-  "description": "Trading journal by Itachi",
+  "name": "IZUMI EDGE",
+  "short_name": "IZUMI EDGE",
+  "description": "IZUMI EDGE - AI trading journal by Itachi",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
