@@ -236,6 +236,28 @@ tbody tr.click:hover{background:var(--soft)}
 .tag.buy{background:var(--win-soft);color:var(--win)} .tag.sell{background:var(--loss-soft);color:var(--loss)}
 .tag.gray{background:var(--soft);color:var(--muted);font-weight:500}
 .empty{color:var(--muted);text-align:center;padding:30px}
+/* AI analyst */
+.cfacts{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:10px}
+.cfacts li{padding:12px 14px;border-radius:16px;background:var(--soft);border:1px solid var(--line);border-inline-start:3px solid var(--muted);line-height:1.75;font-size:14px}
+.cfacts li.pos{border-inline-start-color:var(--win)} .cfacts li.neg{border-inline-start-color:var(--loss)}
+.aimodels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.aimodels button{border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:16px;padding:12px 14px;text-align:start;cursor:pointer;font:inherit}
+.aimodels button.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.aimodels small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.aibar{height:8px;border-radius:99px;background:var(--soft);overflow:hidden;margin:14px 0 6px;border:1px solid var(--line)}
+.aibar i{display:block;height:100%;background:var(--ink);transition:width .3s}
+.aiact{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.aiout{background:var(--soft);border:1px solid var(--line);border-radius:18px;padding:16px;line-height:1.9;font-size:15px;margin-top:14px}
+.aiout[hidden]{display:none}
+.aichat{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.aichat:empty{display:none}
+.aim{padding:10px 14px;border-radius:16px;line-height:1.8;font-size:14px;max-width:92%}
+.aim.user{background:var(--accent);color:var(--accent-ink);align-self:flex-start}
+.aim.assistant{background:var(--soft);border:1px solid var(--line);align-self:flex-end}
+.aisug{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.aisug button{border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:999px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.aiask{display:flex;gap:8px;margin-top:10px}
+.aiask input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:10px 16px;background:var(--soft);color:var(--ink);font:inherit}
 
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.1fr);gap:6px}
@@ -570,7 +592,7 @@ function applyLang(){
   document.documentElement.lang = lang; document.documentElement.dir = lang === "en" ? "ltr" : "rtl";
   document.title = APP_NAME;
   const nav = [["dashboard","home",L("لوحة التحكم","Dashboard")],["daily","daily",L("اليوميات","Daily Journal")],["trades","list",L("الصفقات","Trades")],
-    ["calendar","calendar",L("التقويم","Calendar")],["reports","chart",L("التقارير","Reports")],["playbooks","layers",L("الاستراتيجيات","Playbooks")],["notebook","note",L("الدفتر","Notebook")],["ads","megaphone",L("الإعلانات","Announcements")]];
+    ["calendar","calendar",L("التقويم","Calendar")],["reports","chart",L("التقارير","Reports")],["coach","spark",L("المحلل الذكي","AI Analyst")],["playbooks","layers",L("الاستراتيجيات","Playbooks")],["notebook","note",L("الدفتر","Notebook")],["ads","megaphone",L("الإعلانات","Announcements")]];
   const lvl = OB_STEPS()[0].options.find(o => o[0] === profile?.level);
   const locked = !hasAccess();
   $("side").innerHTML = `<div class="logo"><span class="mark emblem">${EMBLEM}</span>${APP_NAME}</div>
@@ -2129,7 +2151,7 @@ actions["close-welcome"] = () => $("welcomeDlg").close();
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 async function checkVersion(){
   if(!/^https?:$/.test(location.protocol)) return;
   try{
@@ -2177,6 +2199,161 @@ document.addEventListener("change", async e => {
   profile = {...(profile || {}), avatar: await squareAvatar(e.target.files[0])};
   saveAll(); applyLang(); route();
 });
+
+/* ---------- AI analyst ---------- */
+// The numbers are computed here from the user's trades. A small open model (Qwen2.5 through WebLLM) runs on the
+// user's own device (WebGPU) to explain them and answer questions. No API key and no account: the model downloads
+// once from Hugging Face into the browser cache, and trades never leave the device.
+const WEBLLM_URL = "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.89/+esm";
+const AI_MODELS = {small: "Qwen2.5-0.5B-Instruct", big: "Qwen2.5-1.5B-Instruct"};
+let aiModel = read(KEY + "-ai-model", "") || ((navigator.deviceMemory || 8) <= 4 || /Mobi|Android|iPhone/i.test(navigator.userAgent) ? "small" : "big");
+const ai = {engine: null, state: "idle", progress: 0, err: "", report: "", reportOn: false, chat: [], model: ""};
+
+// Plain facts about the user's own results; each one is shown on the page and also given to the model
+function coachFacts(){
+  const s = stats(trades), c = s.closed;
+  if(c.length < 5) return null;
+  const F = [], add = (tone, txt) => F.push({tone, txt});
+  const top = (list, keyFn, min = 3) => groupBy(list, keyFn).filter(g => g.c >= min).sort((a, b) => b.p - a.p);
+  const wr = g => pct(g.w / g.c * 100);
+  add(s.total >= 0 ? "pos" : "neg", L(`على ${tradesWord(c.length)} مغلقة: صافي <b>${money(s.total)}</b>، نسبة نجاح <b>${pct(s.wr)}</b>، ومعامل ربح <b>${pf(s.pf)}</b>.`,
+    `Across ${c.length} closed trades: net <b>${money(s.total)}</b>, win rate <b>${pct(s.wr)}</b>, profit factor <b>${pf(s.pf)}</b>.`));
+  if(s.ratio != null) add(s.ratio >= 1 ? "pos" : "neg", L(`متوسط الصفقة الرابحة <b>${money(s.avgW)}</b> ومتوسط الخاسرة <b>${money(s.avgL)}</b>، أي أن ربحك يساوي <b>${s.ratio.toFixed(2)}</b> مرة خسارتك.`,
+    `Average winner <b>${money(s.avgW)}</b> vs average loser <b>${money(s.avgL)}</b>: your wins are <b>${s.ratio.toFixed(2)}x</b> your losses.`));
+  if(s.maxDD > 0) add("neutral", L(`أكبر تراجع في رصيدك كان <b>${money(-s.maxDD)}</b>، وأطول سلسلة خسائر <b>${s.maxLossStreak}</b> صفقات متتالية.`,
+    `Your largest drawdown was <b>${money(-s.maxDD)}</b>, and your longest losing streak was <b>${s.maxLossStreak}</b> trades in a row.`));
+  const cut = new Date(); cut.setDate(cut.getDate() - 14); const cs = cut.toLocaleDateString("en-CA");
+  const rec = stats(c.filter(t => t.date > cs)), old = stats(c.filter(t => t.date <= cs));
+  if(rec.closed.length >= 3 && old.closed.length >= 3){ const up = rec.expectancy >= old.expectancy;
+    add(up ? "pos" : "neg", L(`آخر 14 يوماً: متوسط الصفقة <b>${money(rec.expectancy)}</b> مقابل <b>${money(old.expectancy)}</b> قبلها، أداؤك ${up ? "يتحسن" : "تراجع"}.`,
+      `Last 14 days: <b>${money(rec.expectancy)}</b> per trade vs <b>${money(old.expectancy)}</b> before, so you are ${up ? "improving" : "slipping"}.`)); }
+  const pair = (g, ar, en) => { if(g.length > 1 && g[0].p > g[g.length - 1].p) add("neutral", L(`${ar}: الأفضل <b>${esc(g[0].k)}</b> (${money(g[0].p)}، نجاح ${wr(g[0])})، والأضعف <b>${esc(g[g.length - 1].k)}</b> (${money(g[g.length - 1].p)}، نجاح ${wr(g[g.length - 1])}).`,
+    `${en}: best <b>${esc(g[0].k)}</b> (${money(g[0].p)}, ${wr(g[0])} wins), weakest <b>${esc(g[g.length - 1].k)}</b> (${money(g[g.length - 1].p)}, ${wr(g[g.length - 1])} wins).`)); };
+  pair(top(c, t => WEEKDAYS[lang][dObj(t.date).getDay()]), "أيام الأسبوع", "Weekdays");
+  pair(top(c.filter(t => t.time), t => t.time.slice(0, 2) + ":00"), "الساعات", "Hours");
+  pair(top(c, t => (t.symbol || "?").toUpperCase()), "الأصول", "Symbols");
+  pair(top(c.filter(t => t.strategy), t => t.strategy), "الاستراتيجيات", "Playbooks");
+  pair(top(c, t => t.side === "sell" ? L("البيع", "Sell") : L("الشراء", "Buy")), "الاتجاه", "Direction");
+  const mt = c.filter(t => (t.mistakes || []).length);
+  if(mt.length){ const ms = groupBy(mt, t => t.mistakes.map(mistakeLabel)).sort((a, b) => a.p - b.p), clean = stats(c.filter(t => !(t.mistakes || []).length));
+    add("neg", L(`${tradesWord(mt.length)} فيها أخطاء، صافيها <b>${money(stats(mt).total)}</b>. أغلى خطأ: <b>${esc(ms[0].k)}</b> (${money(ms[0].p)} في ${tradesWord(ms[0].c)}). الصفقات بلا أخطاء صافيها <b>${money(clean.total)}</b>.`,
+      `${tradesWord(mt.length)} had mistakes, netting <b>${money(stats(mt).total)}</b>. Costliest: <b>${esc(ms[0].k)}</b> (${money(ms[0].p)} over ${tradesWord(ms[0].c)}). Trades without mistakes netted <b>${money(clean.total)}</b>.`)); }
+  const em = top(c.filter(t => t.emotion), t => emotionLabel(t.emotion), 2);
+  if(em.length > 1 && em[em.length - 1].p < 0) add("neg", L(`حين تكون <b>${esc(em[em.length - 1].k)}</b> صافيك <b>${money(em[em.length - 1].p)}</b>، وحين تكون <b>${esc(em[0].k)}</b> صافيك <b>${money(em[0].p)}</b>.`,
+    `When <b>${esc(em[em.length - 1].k)}</b> you net <b>${money(em[em.length - 1].p)}</b>; when <b>${esc(em[0].k)}</b> you net <b>${money(em[0].p)}</b>.`));
+  // The next trade on the same day after a loss, a common sign of revenge trading
+  const afterLoss = c.filter((t, i) => i && c[i - 1].date === t.date && pnl(c[i - 1]) < 0);
+  if(afterLoss.length >= 3){ const a = stats(afterLoss); add(a.wr < s.wr ? "neg" : "pos", L(`بعد صفقة خاسرة في نفس اليوم: نسبة نجاحك <b>${pct(a.wr)}</b> مقابل <b>${pct(s.wr)}</b> عموماً، وصافي هذه الصفقات <b>${money(a.total)}</b>.`,
+    `Right after a loss on the same day your win rate is <b>${pct(a.wr)}</b> vs <b>${pct(s.wr)}</b> overall, netting <b>${money(a.total)}</b>.`)); }
+  const dv = Object.values(s.byDay), busy = dv.filter(d => d.c >= 4), calm = dv.filter(d => d.c <= 3);
+  if(busy.length >= 2 && calm.length >= 2){ const avg = a => a.reduce((x, d) => x + d.p, 0) / a.length;
+    add(avg(busy) < avg(calm) ? "neg" : "neutral", L(`في الأيام التي تتداول فيها 4 صفقات أو أكثر متوسط يومك <b>${money(avg(busy))}</b>، وفي الأيام الأهدأ <b>${money(avg(calm))}</b>.`,
+      `On days with 4+ trades your average day is <b>${money(avg(busy))}</b>; on calmer days it is <b>${money(avg(calm))}</b>.`)); }
+  const ex = top(c.filter(t => t.exitType), t => EXITS().find(e => e[0] === t.exitType)?.[1] || t.exitType, 2);
+  if(ex.length > 1) add("neutral", L(`طريقة الإغلاق: ${ex.map(g => `<b>${esc(g.k)}</b> ${tradesWord(g.c)} (${money(g.p)})`).join("، ")}.`, `Exits: ${ex.map(g => `<b>${esc(g.k)}</b> ${tradesWord(g.c)} (${money(g.p)})`).join(", ")}.`));
+  const ruled = c.filter(t => { const pb = playbooks.find(p => p.name === t.strategy); return pb && pb.rules.length; });
+  const full = ruled.filter(t => (t.rules || []).length >= playbooks.find(p => p.name === t.strategy).rules.length), part = ruled.filter(t => !full.includes(t));
+  if(full.length >= 3 && part.length >= 3){ const f = stats(full), p = stats(part); add(f.expectancy > p.expectancy ? "pos" : "neutral",
+    L(`حين تلتزم بكل قواعد استراتيجيتك متوسط الصفقة <b>${money(f.expectancy)}</b>، وحين تتجاوز قاعدة <b>${money(p.expectancy)}</b>.`,
+      `Following all your playbook rules averages <b>${money(f.expectancy)}</b> per trade; skipping a rule averages <b>${money(p.expectancy)}</b>.`)); }
+  if(s.gw > 0 && s.fees > s.gw * .1) add("neg", L(`الرسوم أكلت <b>${money(s.fees)}</b>، أي <b>${pct(s.fees / s.gw * 100)}</b> من أرباحك.`, `Fees took <b>${money(s.fees)}</b>, <b>${pct(s.fees / s.gw * 100)}</b> of your gross profit.`));
+  const lp = s.losses.map(tradePct).filter(v => v !== null);
+  if(lp.length >= 3){ const avg = lp.reduce((a, b) => a + b, 0) / lp.length, worst = Math.min(...lp);
+    add(worst < -3 ? "neg" : "neutral", L(`متوسط خسارة الصفقة <b>${pctS(avg)}</b> من حسابك، وأكبر خسارة <b>${pctS(worst)}</b>.`, `Your average loss is <b>${pctS(avg)}</b> of the account, and the largest was <b>${pctS(worst)}</b>.`)); }
+  return F;
+}
+
+const fmtAi = t => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^#{1,4}\s*/gm, "").replace(/\n/g, "<br>");
+function renderAi(){
+  const box = $("aiBox"); if(!box) return;
+  const st = ai.state, busy = st === "busy";
+  const models = [["small", L("خفيف وسريع", "Light and fast"), L("≈ 300 ميغا · مناسب للهاتف", "≈ 300 MB · good for phones")],
+    ["big", L("أذكى", "Smarter"), L("≈ 900 ميغا · مناسب للحاسوب", "≈ 900 MB · good for computers")]];
+  if(st === "idle" || st === "error" || st === "nogpu") box.innerHTML = `
+    <p class="muted">${L("المحلل يشغّل نموذج ذكاء اصطناعي <b>داخل جهازك</b>: بلا اشتراك، بلا مفتاح API، وصفقاتك لا تخرج من هاتفك. يُحمَّل مرة واحدة فقط، ثم يعمل حتى بدون إنترنت.",
+      "The analyst runs an AI model <b>on your own device</b>: no subscription, no API key, and your trades never leave it. It downloads once, then works even offline.")}</p>
+    <div class="aimodels">${models.map(([k, t, d]) => `<button type="button" class="${aiModel === k ? "on" : ""}" data-act="ai-model" data-v="${k}"><b>${t}</b><small>${d}</small></button>`).join("")}</div>
+    ${st === "nogpu" ? `<p class="neg">${L("متصفحك أو جهازك لا يدعم تشغيل الذكاء الاصطناعي محلياً (WebGPU). جرّب كروم أو إيدج حديثاً على الحاسوب أو الهاتف. التحليل بالأرقام أسفله يعمل دائماً.",
+      "Your browser or device can't run AI locally (WebGPU). Try a recent Chrome or Edge on a computer or phone. The analysis below always works.")}</p>` : ""}
+    ${st === "error" ? `<p class="neg">${L("تعذّر تشغيل النموذج", "Couldn't start the model")}: <span class="ltr">${esc(ai.err)}</span></p>` : ""}
+    <button class="btn" data-act="ai-start">${ICON.spark}${st === "error" ? L("حاول مرة أخرى", "Try again") : L("شغّل المحلل الذكي", "Start the AI analyst")}</button>
+    <p class="hint">${L("يحتاج متصفحاً حديثاً. يُفضّل الويفي في أول تحميل.", "Needs a recent browser. Wi-Fi is best for the first download.")}</p>`;
+  else if(st === "loading") box.innerHTML = `<p class="muted">${read(KEY + "-ai-ready", false) ? L("جارٍ تشغيل النموذج من جهازك...", "Starting the model from your device...") : L("جارٍ تحميل النموذج لأول مرة، لا تغلق الصفحة...", "Downloading the model for the first time, keep this page open...")}</p>
+    <div class="aibar"><i id="aiBar" style="width:${ai.progress * 100}%"></i></div><span class="hint" id="aiPT">${Math.round(ai.progress * 100)}%</span>`;
+  else {
+    const sug = [L("علاش كنخسر؟", "Why am I losing?"), L("شنو أكبر غلطة كنعاودها؟", "What mistake do I repeat most?"), L("شنو خاصني نبدل هاد السيمانة؟", "What should I change this week?")];
+    box.innerHTML = `<div class="aiact"><button class="btn" data-act="ai-report" ${busy ? "disabled" : ""}>${ICON.spark}${L("حلّل أدائي", "Analyze my trading")}</button>
+      <span class="hint ltr">${esc(ai.model.replace(/-MLC$/, ""))}</span></div>
+      <div class="aiout" id="aiOut" ${ai.reportOn ? "" : "hidden"}>${fmtAi(ai.report) || "…"}</div>
+      <div class="aichat">${ai.chat.map((m, i) => `<div class="aim ${m.role}" ${i === ai.chat.length - 1 && m.role === "assistant" ? 'id="aiLast"' : ""}>${fmtAi(m.content) || "…"}</div>`).join("")}</div>
+      <div class="aisug">${sug.map(q => `<button type="button" data-act="ai-q" data-q="${esc(q)}" ${busy ? "disabled" : ""}>${esc(q)}</button>`).join("")}</div>
+      <div class="aiask"><input id="aiQ" maxlength="300" placeholder="${L("اسأل المحلل عن صفقاتك...", "Ask the analyst about your trades...")}">
+        <button class="btn" data-act="ai-ask" ${busy ? "disabled" : ""}>${L("إرسال", "Send")}</button></div>
+      <p class="hint">${L("الذكاء الاصطناعي قد يخطئ، فارجع دائماً للأرقام أسفله. هذا تحليل لأدائك وليس نصيحة استثمارية.", "AI can make mistakes; check the numbers below. This analyses your performance and is not investment advice.")}</p>`;
+    $("aiQ").onkeydown = e => { if(e.key === "Enter") actions["ai-ask"](); };
+  }
+}
+async function aiStart(){
+  if(ai.engine || ai.state === "loading") return;
+  let adapter = null;
+  try{ adapter = navigator.gpu && await navigator.gpu.requestAdapter(); }catch(e){}
+  if(!adapter){ ai.state = "nogpu"; return renderAi(); }
+  const id = AI_MODELS[aiModel] + (adapter.features.has("shader-f16") ? "-q4f16_1-MLC" : "-q4f32_1-MLC");
+  ai.state = "loading"; ai.progress = 0; renderAi();
+  try{
+    const webllm = await import(WEBLLM_URL);
+    ai.engine = await webllm.CreateMLCEngine(id, {initProgressCallback: r => {
+      ai.progress = r.progress || 0;
+      if($("aiBar")){ $("aiBar").style.width = ai.progress * 100 + "%"; $("aiPT").textContent = Math.round(ai.progress * 100) + "%"; }
+    }});
+    ai.state = "ready"; ai.model = id; write(KEY + "-ai-ready", true);
+  }catch(e){ ai.engine = null; ai.state = "error"; ai.err = String(e?.message || e).slice(0, 200); }
+  renderAi();
+}
+async function aiRun(q, isChat){
+  const F = coachFacts();
+  if(!ai.engine || ai.state === "busy" || !F) return;
+  const data = F.map(f => "- " + f.txt.replace(/<[^>]+>/g, "")).join("\n");
+  const sys = L(`أنت "محلل إيتاشي"، مدرب أداء يساعد متداولاً على فهم نتائجه. هذه الحقائق محسوبة من صفقاته الحقيقية:\n${data}\n\nالقواعد: اكتب بالعربية البسيطة وبجمل قصيرة وواضحة. استعمل هذه الأرقام فقط ولا تخترع أرقاماً أو صفقات. لا تعطِ توصيات شراء أو بيع ولا توقعات للأسعار ولا إشارات تداول. ركّز على السلوك والانضباط وإدارة المخاطر. إذا لم تجد المعلومة في الحقائق فقل ذلك بصراحة.`,
+    `You are "Itachi Analyst", a performance coach helping a trader understand their results. These facts are computed from their real trades:\n${data}\n\nRules: write in simple, short, clear English. Use only these numbers and never invent numbers or trades. Never give buy or sell recommendations, price predictions or trading signals. Focus on behaviour, discipline and risk management. If the facts don't contain the answer, say so plainly.`);
+  const msgs = [{role: "system", content: sys}];
+  if(isChat){ ai.chat.slice(-6).forEach(m => msgs.push(m)); ai.chat.push({role: "user", content: q}, {role: "assistant", content: ""}); }
+  else { ai.reportOn = true; ai.report = ""; }
+  msgs.push({role: "user", content: q});
+  ai.state = "busy"; renderAi();
+  let out = "";
+  const show = () => { if(isChat) ai.chat[ai.chat.length - 1].content = out; else ai.report = out; const el = $(isChat ? "aiLast" : "aiOut"); if(el) el.innerHTML = fmtAi(out); };
+  try{
+    const stream = await ai.engine.chat.completions.create({messages: msgs, stream: true, temperature: .3, max_tokens: 700});
+    for await (const ch of stream){ out += ch.choices[0]?.delta?.content || ""; show(); }
+  }catch(e){ out += (out ? "\n\n" : "") + L("تعذّر إكمال الجواب: ", "Couldn't finish the answer: ") + String(e?.message || e).slice(0, 150); show(); }
+  ai.state = "ready"; renderAi();
+}
+Object.assign(actions, {
+  "ai-model": el => { aiModel = el.dataset.v; write(KEY + "-ai-model", aiModel); renderAi(); },
+  "ai-start": () => { if(ai.state === "error") ai.state = "idle"; aiStart(); },
+  "ai-report": () => aiRun(L("اكتب تقريراً قصيراً عن أدائي في أربعة أقسام: 1) ملخص في جملتين 2) أكبر مشكلة تكلّفني المال 3) نقاط قوتي 4) ثلاث خطوات عملية لهذا الأسبوع.",
+    "Write a short report on my trading in four parts: 1) a two-sentence summary 2) the biggest problem costing me money 3) my strengths 4) three practical steps for this week."), false),
+  "ai-q": el => aiRun(el.dataset.q, true),
+  "ai-ask": () => { const q = $("aiQ")?.value.trim(); if(q) aiRun(q, true); }
+});
+pages.coach = () => {
+  const F = coachFacts();
+  return {
+    html: `<div class="head"><h1>${L("المحلل الذكي", "AI Analyst")}</h1></div>
+      ${!F ? `<div class="panel empty">${L("سجّل 5 صفقات مغلقة على الأقل ليبدأ المحلل بتحليل أدائك.", "Log at least 5 closed trades so the analyst can study your results.")}</div>` : `
+      <div class="panel"><h2>${ICON.spark}${L("الذكاء الاصطناعي", "AI coach")}</h2><div id="aiBox"></div></div>
+      <div class="panel"><h2>${ICON.chart}${L("ما وجده المحلل في صفقاتك", "What the analyst found")}</h2>
+        <ul class="cfacts">${F.map(f => `<li class="${f.tone}">${f.txt}</li>`).join("")}</ul>
+        <p class="hint">${L("محسوبة مباشرة من صفقاتك المسجّلة.", "Computed directly from your logged trades.")}</p></div>`}`,
+    after(){
+      if(!F) return;
+      renderAi();
+      // A model downloaded before starts straight from the browser cache
+      if(ai.state === "idle" && read(KEY + "-ai-ready", false)) aiStart();
+    }
+  };
+};
 
 /* ---------- accounts and cloud sync ---------- */
 // Signed-in users keep their journal in Firestore under users/<uid>, so any device shows the same data. Only that
