@@ -160,7 +160,8 @@
       else { el.style.left = (r.right + 14) + "px"; el.style.right = "auto"; }
     }
   }
-  addEventListener("scroll", positionPopups, {passive: true, capture: true});
+  let lastScroll = 0;
+  addEventListener("scroll", () => { lastScroll = performance.now(); positionPopups(); }, {passive: true, capture: true});
   addEventListener("resize", positionPopups, {passive: true});
   // The sidebar is re-rendered by the app (language, sign-in...), so the card is put back each time
   const sideEl = document.getElementById("side");
@@ -208,16 +209,18 @@
     if(!webgl) return fallback(cur, "webgl");
     box.classList.add("m3-loading");
     try{
-      THREE = await import(`${CDN}/+esm`);
-      ({GLTFLoader} = await import(`${CDN}/examples/jsm/loaders/GLTFLoader.js/+esm`));
-      ({OrbitControls} = await import(`${CDN}/examples/jsm/controls/OrbitControls.js/+esm`));
-      // Models are compressed with meshopt to keep downloads small
-      ({DecalGeometry} = await import(`${CDN}/examples/jsm/geometries/DecalGeometry.js/+esm`));
-      const {MeshoptDecoder} = await import(`${CDN}/examples/jsm/libs/meshopt_decoder.module.js/+esm`);
+      // All modules download in parallel; the model file starts downloading at the same time
+      const lib = p => import(`${CDN}/examples/jsm/${p}/+esm`);
+      const first = CHARS.find(c => c.id === store.get("m3-char")) || CHARS[0];
+      const prefetch = first && first.url ? fetch(first.url).catch(() => {}) : null;
+      let MeshoptDecoder, RoomEnvironment;
+      [THREE, {GLTFLoader}, {OrbitControls}, {DecalGeometry}, {MeshoptDecoder}, {RoomEnvironment}] = await Promise.all([
+        import(`${CDN}/+esm`), lib("loaders/GLTFLoader.js"), lib("controls/OrbitControls.js"), lib("geometries/DecalGeometry.js"),
+        lib("libs/meshopt_decoder.module.js"), lib("environments/RoomEnvironment.js")]);
+      await prefetch;
       loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
-      const {RoomEnvironment} = await import(`${CDN}/examples/jsm/environments/RoomEnvironment.js/+esm`);
       renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true, powerPreference: "low-power"});
-      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.25));   // a small card does not need more pixels
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -457,7 +460,8 @@
   function loop(now){
     requestAnimationFrame(loop);
     const dt = Math.min(.1, (now - last) / 1000 || 0); last = now; acc += dt;
-    if(acc < 1 / 30 || document.hidden || !visible || box.classList.contains("m3-mini") || box.classList.contains("m3-fallback")) return;
+    // 24 fps is plenty for gentle idle motion; while the page is scrolling the mascot pauses so scrolling stays smooth
+    if(acc < 1 / 24 || document.hidden || !visible || performance.now() - lastScroll < 140 || box.classList.contains("m3-mini") || box.classList.contains("m3-fallback")) return;
     const step = acc; acc = 0;
     mixer && mixer.update(step);
     if(model){
@@ -532,6 +536,7 @@
   const themeStyle = document.createElement("style"); document.head.appendChild(themeStyle);
   const themeOn = () => store.get("m3-theme") === "on";
   function applyTheme(){
+    window.cvReset && window.cvReset();   // the app caches theme colours
     const th = cur && cur.theme, on = themeOn() && th;
     document.documentElement.toggleAttribute("data-m3theme", !!on);
     if(!on){ themeStyle.textContent = ""; return; }
