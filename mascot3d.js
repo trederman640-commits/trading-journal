@@ -435,7 +435,8 @@
     const env = a ? Math.sin(Math.min(1, p < .15 ? p / .15 : p > .85 ? (1 - p) / .15 : 1) * Math.PI / 2) : 0;
     const br = reduced ? 0 : Math.sin(s * 1.8);
     let rArm = [0, 0, .3 + br * .04], lArm = [0, 0, -.3 - br * .04], rFore = [0, 0, 0], lFore = [0, 0, 0];
-    let spine = [0, 0, br * .025], neck = [0, look.x * .45, -look.y * .25];
+    // The head follows the pointer but never bows down, so the face (deep in the hood for Ember) stays visible
+    let spine = [0, 0, br * .025], neck = [0, look.x * .3, .06 + Math.max(-.04, Math.min(.16, -look.y * .16))];
     if(a && a.kind === "tap"){        // a small friendly nod (the hand wave was removed: it looked wrong on the rigs)
       neck = [.12 * env, neck[1], neck[2] - Math.sin(p * Math.PI * 2) * .18 * env];
     } else if(a && a.kind === "win"){ // claps in front of the chest
