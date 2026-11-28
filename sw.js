@@ -1,6 +1,6 @@
-// Lets the installed app open without internet. The app's own files are network-first, so updates still arrive
+﻿// Lets the installed app open without internet. The app's own files are network-first, so updates still arrive
 // as soon as the user is online; user data is never touched here (it lives in localStorage and IndexedDB).
-const CACHE = "itachi-journaling-v2"; // v2 clears the extra "?v=" copies that v1 kept
+const CACHE = "itachi-journaling-v3"; // v2 clears the extra "?v=" copies that v1 kept
 const SHELL = ["./", "manifest.json", "icon.svg", "icon-180.png", "icon-192.png", "icon-512.png"];
 // cdn.jsdelivr.net serves the version-pinned Three.js files used by the 3D mascot
 const PINNED_HOSTS = ["www.gstatic.com", "fonts.googleapis.com", "fonts.gstatic.com", "cdn.jsdelivr.net"];
