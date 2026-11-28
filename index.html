@@ -334,7 +334,7 @@ body::after{background:conic-gradient(from 198deg at 92% -12%,transparent 0deg,v
 .ix{position:fixed;inset:0;z-index:9999;background:#030303;display:grid;place-items:center;transition:opacity .6s ease;color:#f4f4f5;font-family:"Poppins","Inter","IBM Plex Sans Arabic",sans-serif}
 .ix.ixout{opacity:0;pointer-events:none}
 .ixcard{position:relative;width:min(1240px,94vw);height:min(780px,90vh);border-radius:26px;overflow:hidden;background:#0c0c0e;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 120px rgba(0,0,0,.7)}
-.ixbg{position:absolute;left:-10%;top:-10%;width:120%;height:120%;filter:blur(46px) brightness(.55) contrast(1.1);opacity:.9}
+.ixbg{position:absolute;left:-10%;top:-10%;width:120%;height:120%;opacity:.5}
 .ixcard::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 50%,transparent,rgba(0,0,0,.55));pointer-events:none}
 .ix3d{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
 .ixtop{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:26px 44px}
@@ -2361,7 +2361,7 @@ const bgFx = (() => {
       g.fillStyle = `rgba(${rgb},${a.toFixed(2)})`; g.fillRect(px, py, z, z);
     }
   };
-  const loop = t => { requestAnimationFrame(loop); if(document.hidden || t - last < 33) return; const dt = Math.min(100, t - (prev || t)); prev = last = t; draw(t, dt); };
+  const loop = t => { requestAnimationFrame(loop); if(document.hidden || t - last < 33 || document.body.lastElementChild?.classList.contains("ix")) return; const dt = Math.min(100, t - (prev || t)); prev = last = t; draw(t, dt); };
   return mode => {
     if(mode) bgMode = mode;
     if(!c){ c = document.createElement("canvas"); c.className = "bgdots"; document.body.prepend(c); g = c.getContext("2d"); addEventListener("resize", () => { size(); if(still) draw(0, 0); }); }
@@ -2375,7 +2375,7 @@ actions["bg-mode"] = el => { bgFx(el.dataset.m); write(KEY + "-bg", bgMode); rou
 // Full-screen intro on every open: big IZUMI EDGE title, a slowly morphing liquid-chrome shape (Three.js) and a blurred copy behind it
 function showIntro(next){
   const el = document.createElement("div"); el.className = "ix"; el.dir = "ltr";
-  el.innerHTML = `<div class="ixcard"><canvas class="ixbg" width="192" height="120"></canvas>
+  el.innerHTML = `<div class="ixcard"><canvas class="ixbg" width="80" height="50"></canvas>
     <header class="ixtop"><div class="ixlogo">${EMBLEM}<span>IZUMI EDGE</span></div>
       <div class="ixauth"><button class="ixb on" data-ix="enter">${L("ادخل", "Enter")}</button><button class="ixb" data-ix="acct">${signedIn() ? L("حسابي", "Account") : L("تسجيل الدخول", "Sign in")}</button></div></header>
     <div class="ixyear">${new Date().getFullYear()}</div>
@@ -2399,36 +2399,44 @@ async function introBlob(card){
   if(!card.isConnected) return;
   const c3 = card.querySelector(".ix3d"), bg = card.querySelector(".ixbg"), g = bg.getContext("2d");
   const r = new T.WebGLRenderer({ canvas: c3, antialias: true, alpha: true });
-  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)); r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.6;
+  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25)); r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.6;
   const scene = new T.Scene(), cam = new T.PerspectiveCamera(32, 1, .1, 50); cam.position.set(0, 0, 7);
   const pm = new T.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnvironment(), .03).texture; pm.dispose();
-  const geo = new T.SphereGeometry(1, 128, 96), pos = geo.attributes.position, base = pos.array.slice();
-  const mat = new T.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1, roughness: .1, clearcoat: 1, clearcoatRoughness: .06 });
+  // The shape is bent on the GPU (vertex shader) instead of in JavaScript: the same wave + twist formula, normals from two nearby points
+  const geo = new T.SphereGeometry(1, 160, 120), uT = { value: 0 };
+  const mat = new T.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .08 });
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uT = uT;
+    sh.vertexShader = "uniform float uT;\nvec3 dsp(vec3 p){ float s=uT;\n" +
+      " float d=1.+.24*sin(p.x*2.4+s*.9)*sin(p.y*2.9+s*.7)+.17*sin(p.z*3.5-s*.8+p.y*1.6)+.06*sin((p.x-p.y+p.z)*6.+s*1.4);\n" +
+      " float w=p.y*1.3*sin(s*.45); float cw=cos(w), sw=sin(w);\n" +
+      " return vec3((p.x*cw-p.z*sw)*d, p.y*d*1.08, (p.x*sw+p.z*cw)*d); }\n" + sh.vertexShader;
+    sh.vertexShader = sh.vertexShader
+      .replace("#include <beginnormal_vertex>", `vec3 p0=dsp(position); vec3 ta=normalize(cross(normal, abs(normal.y)<.99?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 tb=cross(normal,ta);
+        vec3 objectNormal=normalize(cross(dsp(normalize(position+ta*.01))-p0, dsp(normalize(position+tb*.01))-p0)); if(dot(objectNormal,p0)<0.) objectNormal=-objectNormal;`)
+      .replace("#include <begin_vertex>", "vec3 transformed = p0;");
+  };
   const mesh = new T.Mesh(geo, mat); scene.add(mesh);
   const key = new T.DirectionalLight(0xffffff, 2.6); key.position.set(3, 3, 2); scene.add(key);
   const rim = new T.DirectionalLight(0xffffff, 1.6); rim.position.set(-3, -1, -2); scene.add(rim);
   const size = () => { const w = c3.clientWidth, h = c3.clientHeight; if(!w) return; r.setSize(w, h, false); cam.aspect = w / h;
     cam.position.z = w < 700 ? 9.5 : 7; cam.updateProjectionMatrix(); };
   size(); addEventListener("resize", size);
-  let last = 0, mx = 0, my = 0;
+  let last = 0, mx = 0, my = 0, rx = 0, ry = 0;
+  g.filter = "blur(3px)";
   card.addEventListener("pointermove", e => { const b = card.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width - .5; my = (e.clientY - b.top) / b.height - .5; });
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frame = t => {
     if(!card.isConnected){ removeEventListener("resize", size); geo.dispose(); mat.dispose(); scene.environment?.dispose(); r.dispose(); return; }
     requestAnimationFrame(frame);
-    if(document.hidden || t - last < 33) return; last = t;
-    const s = still ? 2 : t / 1000, a = pos.array;
-    for(let i = 0; i < a.length; i += 3){
-      const x = base[i], y = base[i + 1], z = base[i + 2];
-      const d = 1 + .24 * Math.sin(x * 2.4 + s * .9) * Math.sin(y * 2.9 + s * .7) + .17 * Math.sin(z * 3.5 - s * .8 + y * 1.6) + .06 * Math.sin((x - y + z) * 6 + s * 1.4);
-      const w = y * 1.3 * Math.sin(s * .45), cw = Math.cos(w), sw = Math.sin(w); // slow twist for a liquid, ribbon-like flow
-      a[i] = (x * cw - z * sw) * d; a[i + 1] = y * d * 1.08; a[i + 2] = (x * sw + z * cw) * d;
-    }
-    pos.needsUpdate = true; geo.computeVertexNormals();
-    mesh.rotation.y = s * .22 + mx * .7; mesh.rotation.x = Math.sin(s * .3) * .3 + my * .5;
+    if(document.hidden || (still && last)) return;
+    const s = still ? 2 : t / 1000; uT.value = s;
+    ry += (s * .22 + mx * .7 - ry) * .08; rx += (Math.sin(s * .3) * .3 + my * .5 - rx) * .08;
+    mesh.rotation.y = ry; mesh.rotation.x = rx;
     r.render(scene, cam);
-    g.clearRect(0, 0, bg.width, bg.height); const k = 2.6;
-    g.drawImage(c3, bg.width * (1 - k) / 2, bg.height * (1 - k) / 2, bg.width * k, bg.height * k);
+    // blurred copy behind: a tiny canvas (blurred inside, cheap) that the browser scales up; refreshed 15 times a second
+    if(t - last > 66){ last = t; g.clearRect(0, 0, bg.width, bg.height); const k = 2.6;
+      g.drawImage(c3, bg.width * (1 - k) / 2, bg.height * (1 - k) / 2, bg.width * k, bg.height * k); }
   };
   requestAnimationFrame(frame);
 }
@@ -2436,7 +2444,7 @@ async function introBlob(card){
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 37;
+const APP_VERSION = 38;
 // Floating amber dust in the AI hero: ~40 slow particles, 30 fps, stops when the hero leaves the page or the tab is hidden
 function heroDust(hero) {
   const c = document.createElement("canvas"); c.className = "aizdust"; hero.prepend(c);
@@ -3106,6 +3114,6 @@ bgFx();
 showIntro(() => { if(!profile) showOnboarding(); else showWelcome(); });
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=37" defer></script>
+<script src="mascot3d.js?v=38" defer></script>
 </body>
 </html>
