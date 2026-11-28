@@ -26,21 +26,21 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#070708; --panel:rgba(17,17,19,.78); --solid:#131315; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
+    --bg:#020202; --panel:rgba(7,7,8,.72); --solid:#0a0a0b; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
   --accent:#f3f3f4; --accent-ink:#0b0b0c; --nav-on:rgba(255,255,255,.08); --nav-on-ink:#ffffff;
   --inv:#18181b; --inv-ink:#f3f3f4; --inv-muted:#85858d; --inv-line:rgba(255,255,255,.08);
   --win:#3ee08f; --loss:#ff5d6c; --win-soft:rgba(62,224,143,.1); --loss-soft:rgba(255,93,108,.1); --warn:#f5a524;
   --chart:#f3f3f4; --c2:#d4d4d8; --c3:#a1a1aa; --c4:#e4e4e7; --glow:rgba(255,255,255,.22); --edge:rgba(255,255,255,.18);
-  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.03),transparent 60%);
+  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.035),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.015),transparent 60%);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#070708; --panel:rgba(17,17,19,.78); --solid:#131315; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
+  --bg:#020202; --panel:rgba(7,7,8,.72); --solid:#0a0a0b; --ink:#f3f3f4; --muted:#85858d; --line:rgba(255,255,255,.08); --soft:#19191c;
   --accent:#f3f3f4; --accent-ink:#0b0b0c; --nav-on:rgba(255,255,255,.08); --nav-on-ink:#ffffff;
   --inv:#18181b; --inv-ink:#f3f3f4; --inv-muted:#85858d; --inv-line:rgba(255,255,255,.08);
   --win:#3ee08f; --loss:#ff5d6c; --win-soft:rgba(62,224,143,.1); --loss-soft:rgba(255,93,108,.1); --warn:#f5a524;
   --chart:#f3f3f4; --c2:#d4d4d8; --c3:#a1a1aa; --c4:#e4e4e7; --glow:rgba(255,255,255,.22); --edge:rgba(255,255,255,.18);
-  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.07),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.03),transparent 60%);
+  --shadow:none; --bgfx:radial-gradient(900px 520px at 0% 0%,rgba(255,255,255,.035),transparent 60%),radial-gradient(700px 500px at 100% 100%,rgba(255,255,255,.015),transparent 60%);
 }
 *{box-sizing:border-box}
 html{scrollbar-width:thin;scrollbar-color:rgba(128,128,128,.35) transparent;color-scheme:light}
@@ -313,7 +313,7 @@ body::after{background:conic-gradient(from 198deg at 92% -12%,transparent 0deg,v
 .btn:not(.ghost){background-image:linear-gradient(180deg,rgba(255,255,255,.16),transparent 60%);box-shadow:0 0 22px var(--bloom)}
 .nav.on,.nbitem.on{box-shadow:inset 0 0 0 1px var(--crest),0 0 18px var(--crest)}
 .aizsend{background:var(--accent);color:var(--accent-ink)}
-.aizhero{background:radial-gradient(70% 42% at 50% 112%,var(--hl1),transparent 70%),radial-gradient(34% 24% at 50% 104%,var(--hl2),transparent 70%),radial-gradient(50% 36% at 88% -8%,var(--hl3),transparent 70%),var(--solid)}
+.aizhero{background:radial-gradient(70% 42% at 50% 112%,var(--hl1),transparent 70%),radial-gradient(34% 24% at 50% 104%,var(--hl2),transparent 70%),radial-gradient(50% 36% at 88% -8%,var(--hl3),transparent 70%),color-mix(in srgb,var(--solid) 45%,transparent)}
 .aizhero::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:conic-gradient(from 330deg at 50% 118%,transparent 0deg,var(--ray) 7deg,transparent 14deg,transparent 22deg,var(--ray) 27deg,transparent 33deg,transparent 40deg,var(--ray) 44deg,transparent 52deg,transparent 360deg);
   -webkit-mask-image:linear-gradient(0deg,#000,transparent 85%);mask-image:linear-gradient(0deg,#000,transparent 85%)}
@@ -323,6 +323,39 @@ body::after{background:conic-gradient(from 198deg at 92% -12%,transparent 0deg,v
 .aizsend{box-shadow:0 0 18px var(--bloom)}
 .aiztitle b{text-shadow:0 0 28px var(--bloom)}
 .aizpill{box-shadow:0 0 22px var(--bloom)}
+/* Site background: a waving field of small dots that ripples away from the mouse */
+.bgdots{position:fixed;inset:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+.panel{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.bgpick{display:flex;gap:8px;flex-wrap:wrap}
+.bgpick .btn.on{border-color:var(--ink);box-shadow:0 0 18px var(--bloom)}
+:root{--dotc:20,20,26} :root[data-theme="dark"]{--dotc:255,255,255}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--dotc:255,255,255}}
+/* Entry screen: black & white, big title with a 3D liquid-chrome shape in front and a blurred copy behind */
+.ix{position:fixed;inset:0;z-index:9999;background:#030303;display:grid;place-items:center;transition:opacity .6s ease;color:#f4f4f5;font-family:"Poppins","Inter","IBM Plex Sans Arabic",sans-serif}
+.ix.ixout{opacity:0;pointer-events:none}
+.ixcard{position:relative;width:min(1240px,94vw);height:min(780px,90vh);border-radius:26px;overflow:hidden;background:#0c0c0e;border:1px solid rgba(255,255,255,.07);box-shadow:0 40px 120px rgba(0,0,0,.7)}
+.ixbg{position:absolute;left:-10%;top:-10%;width:120%;height:120%;filter:blur(46px) brightness(.55) contrast(1.1);opacity:.9}
+.ixcard::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 50%,transparent,rgba(0,0,0,.55));pointer-events:none}
+.ix3d{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+.ixtop{position:absolute;top:0;left:0;right:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:26px 44px}
+.ixlogo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.06em;font-size:14px}
+.ixlogo svg{width:30px;height:30px;border-radius:9px}
+.ixauth{display:flex;padding:4px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.04);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.ixb{border:0;border-radius:999px;padding:9px 24px;background:none;color:#f4f4f5;font:inherit;font-size:14px;font-weight:500;cursor:pointer}
+.ixb.on{background:#f4f4f5;color:#0b0b0c;box-shadow:0 0 24px rgba(255,255,255,.25)}
+.ixword{position:absolute;left:0;right:0;top:50%;transform:translateY(-54%);z-index:1;margin:0;text-align:center;font-size:clamp(56px,13.5vw,210px);font-weight:800;letter-spacing:-.02em;line-height:1;white-space:nowrap;
+  background:linear-gradient(180deg,#ffffff,#a9a9b0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 10px 30px rgba(0,0,0,.6))}
+.ixyear{position:absolute;left:44px;top:50%;transform:translateY(-50%) rotate(-90deg);z-index:3;font-size:13px;letter-spacing:.2em;color:#cfcfd4}
+.ixsoc{position:absolute;right:40px;top:50%;transform:translateY(-50%);z-index:3;display:flex;flex-direction:column;gap:14px}
+.ixsoc a{color:#e8e8ea;display:grid;place-items:center;width:26px;height:26px;opacity:.85}
+.ixsoc a:hover{opacity:1} .ixsoc svg{width:18px;height:18px}
+.ixabout{position:absolute;left:44px;bottom:40px;z-index:3;max-width:360px;text-align:start}
+.ixabout span{display:flex;align-items:center;gap:8px;font-size:12px;letter-spacing:.14em;color:#d4d4d8;border-inline-start:1px solid rgba(255,255,255,.4);padding:30px 0 0 10px}
+.ixabout p{margin:12px 0 0;font-size:clamp(15px,1.6vw,20px);line-height:1.5;color:#b9b9c0;font-family:"IBM Plex Sans Arabic","Inter",sans-serif}
+.ixgo{position:absolute;right:44px;bottom:40px;z-index:3;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 12px 10px 18px;background:rgba(255,255,255,.07);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:#f4f4f5;font:inherit;font-size:14px;cursor:pointer}
+.ixgo i{width:24px;height:24px;border-radius:50%;background:#f4f4f5;color:#0b0b0c;display:grid;place-items:center;font-style:normal;font-size:10px;box-shadow:0 0 16px rgba(255,255,255,.4)}
+@media (max-width:700px){.ixcard{width:100vw;height:100dvh;border-radius:0;border:0}.ixtop{padding:18px 16px}.ixb{padding:8px 14px;font-size:13px}.ixlogo span{display:none}
+  .ixyear{left:4px}.ixsoc{right:14px}.ixabout{left:18px;right:18px;bottom:96px}.ixgo{right:18px;left:18px;bottom:24px;justify-content:space-between}}
 
 /* calendar */
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) minmax(0,1.1fr);gap:6px}
@@ -1427,6 +1460,8 @@ pages.settings = () => {
         <h2 style="margin-top:20px">${L("الإصدار", "Version")} <span class="cnt" id="appVer">${APP_VERSION}</span></h2>
         <button class="btn ghost" data-act="check-update">${ICON.refresh}${L("البحث عن تحديث", "Check for updates")}</button>
         <h2 style="margin-top:20px">${L("المظهر", "Appearance")}</h2><button class="btn ghost" data-act="theme">${L("تبديل الوضع الليلي / النهاري", "Toggle dark / light mode")}</button>
+        <p class="muted" style="margin:16px 0 8px">${L("الخلفية المتحركة", "Animated background")}</p>
+        <div class="bgpick">${BG_MODES.map(m => `<button class="btn ghost ${bgMode === m ? "on" : ""}" data-act="bg-mode" data-m="${m}">${m === "stars" ? L("✦ نجوم في الفضاء", "✦ Stars in space") : L("☁ دخان", "☁ Smoke")}</button>`).join("")}</div>
         <h2 style="margin-top:20px">${L("النسخ الاحتياطي", "Backup")}</h2>
         <p class="hint">${L("بياناتك محفوظة في هذا المتصفح فقط. صدّر نسخة احتياطية بانتظام (تشمل الصور).", "Your data is stored in this browser only. Export a backup regularly (includes screenshots).")}</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -2275,10 +2310,133 @@ function showWelcome(){
 }
 actions["close-welcome"] = () => $("welcomeDlg").close();
 
+/* ---------- animated background (chosen in Settings → Appearance) ---------- */
+// "stars": twinkling stars drifting slowly toward the viewer, like flying through space.
+// "smoke": soft smoke clouds drifting and turning; drawn at 1/4 size and scaled up with a blur, so it stays cheap.
+// 30 fps, paused while the tab is hidden, a still frame when the user prefers reduced motion. No mouse tracking.
+const BG_MODES = ["stars", "smoke"];
+let bgMode = BG_MODES.includes(read(KEY + "-bg", "stars")) ? read(KEY + "-bg", "stars") : "stars";
+const bgFx = (() => {
+  let c, g, W = 0, H = 0, last = 0, prev = 0, rgb = "", rgbT = -1e9, stars = [], puffs = [], sprite = null, started = false;
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches, SM = 4;
+  const size = () => {
+    const k = bgMode === "smoke" ? SM : 1;
+    W = c.width = Math.ceil(innerWidth / k); H = c.height = Math.ceil(innerHeight / k);
+    c.style.filter = bgMode === "smoke" ? "blur(8px)" : "";
+  };
+  const star = far => ({ x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: far ? 1 : .05 + Math.random() * .95, p: Math.random() * 6.28, b: .35 + Math.random() * .65 });
+  const seed = () => {
+    stars = Array.from({ length: Math.min(420, Math.round(innerWidth * innerHeight / 4500)) }, () => star(false));
+    puffs = Array.from({ length: 14 }, () => ({ x: Math.random() * 1.4 - .2, y: Math.random() * 1.4 - .2, r: .35 + Math.random() * .45,
+      vx: (Math.random() - .5) * .000012, vy: -.000004 - Math.random() * .00001, a: Math.random() * 6.28, va: (Math.random() - .5) * .00006, o: .035 + Math.random() * .045 }));
+  };
+  // one soft cloud texture built from overlapping radial gradients, reused for every puff
+  const makeSprite = () => {
+    const s = document.createElement("canvas"); s.width = s.height = 128; const x = s.getContext("2d");
+    for(let i = 0; i < 8; i++){
+      const cx = 36 + Math.random() * 56, cy = 36 + Math.random() * 56, r = 22 + Math.random() * 34, gr = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+      gr.addColorStop(0, `rgba(${rgb},.45)`); gr.addColorStop(1, `rgba(${rgb},0)`); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    }
+    sprite = s;
+  };
+  const draw = (t, dt) => {
+    if(t - rgbT > 1000){ rgbT = t; const v = getComputedStyle(document.documentElement).getPropertyValue("--dotc").trim() || "255,255,255"; if(v !== rgb){ rgb = v; makeSprite(); } }
+    g.clearRect(0, 0, W, H);
+    if(bgMode === "smoke"){
+      const m = Math.max(W, H);
+      for(const p of puffs){
+        p.x += p.vx * dt; p.y += p.vy * dt; p.a += p.va * dt;
+        if(p.y < -.5) p.y = 1.5; if(p.x < -.5) p.x = 1.5; if(p.x > 1.5) p.x = -.5;
+        const s = p.r * m * 1.6;
+        g.save(); g.globalAlpha = p.o; g.translate(p.x * W, p.y * H); g.rotate(p.a); g.drawImage(sprite, -s / 2, -s / 2, s, s); g.restore();
+      }
+      return;
+    }
+    const cx = W / 2, cy = H / 2, f = Math.max(W, H) * .5;
+    for(const q of stars){
+      q.z -= dt * .000022;
+      let px = cx + q.x / q.z * f * .35, py = cy + q.y / q.z * f * .35;
+      if(q.z < .03 || px < -10 || px > W + 10 || py < -10 || py > H + 10){ Object.assign(q, star(true)); continue; }
+      const near = 1 - q.z, tw = .65 + .35 * Math.sin(t / 650 + q.p), a = Math.min(1, (.15 + near * .85) * q.b * tw), z = .6 + near * 1.9;
+      g.fillStyle = `rgba(${rgb},${a.toFixed(2)})`; g.fillRect(px, py, z, z);
+    }
+  };
+  const loop = t => { requestAnimationFrame(loop); if(document.hidden || t - last < 33) return; const dt = Math.min(100, t - (prev || t)); prev = last = t; draw(t, dt); };
+  return mode => {
+    if(mode) bgMode = mode;
+    if(!c){ c = document.createElement("canvas"); c.className = "bgdots"; document.body.prepend(c); g = c.getContext("2d"); addEventListener("resize", () => { size(); if(still) draw(0, 0); }); }
+    size(); seed(); rgbT = -1e9;
+    if(still) draw(0, 0); else if(!started){ started = true; requestAnimationFrame(loop); }
+  };
+})();
+actions["bg-mode"] = el => { bgFx(el.dataset.m); write(KEY + "-bg", bgMode); route(); };
+
+/* ---------- entry screen ---------- */
+// Full-screen intro on every open: big IZUMI EDGE title, a slowly morphing liquid-chrome shape (Three.js) and a blurred copy behind it
+function showIntro(next){
+  const el = document.createElement("div"); el.className = "ix"; el.dir = "ltr";
+  el.innerHTML = `<div class="ixcard"><canvas class="ixbg" width="192" height="120"></canvas>
+    <header class="ixtop"><div class="ixlogo">${EMBLEM}<span>IZUMI EDGE</span></div>
+      <div class="ixauth"><button class="ixb on" data-ix="enter">${L("ادخل", "Enter")}</button><button class="ixb" data-ix="acct">${signedIn() ? L("حسابي", "Account") : L("تسجيل الدخول", "Sign in")}</button></div></header>
+    <div class="ixyear">${new Date().getFullYear()}</div>
+    <h1 class="ixword">IZUMI EDGE</h1>
+    <canvas class="ix3d"></canvas>
+    <div class="ixsoc">${socialLinks(false)}</div>
+    <div class="ixabout"><span>• IZUMI EDGE AI</span><p dir="auto">${L("دفتر تداول ذكي يقرأ صفقاتك ويخبرك بما يجب تغييره", "A smart trading journal that reads your trades and tells you what to change")}</p></div>
+    <button class="ixgo" data-ix="enter">${L("ابدأ الآن", "Get started")}<i>▶</i></button></div>`;
+  document.body.append(el);
+  let done = false;
+  const go = acct => { if(done) return; done = true; el.classList.add("ixout"); setTimeout(() => el.remove(), 650);
+    removeEventListener("keydown", key); if(acct) location.hash = "#account"; else next?.(); };
+  const key = e => { if(e.key === "Enter" || e.key === "Escape") go(false); };
+  addEventListener("keydown", key);
+  el.addEventListener("click", e => { const b = e.target.closest("[data-ix]"); if(b) go(b.dataset.ix === "acct"); });
+  introBlob(el.querySelector(".ixcard")).catch(() => {});
+}
+async function introBlob(card){
+  const CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0";
+  const [T, { RoomEnvironment }] = await Promise.all([import(`${CDN}/+esm`), import(`${CDN}/examples/jsm/environments/RoomEnvironment.js/+esm`)]);
+  if(!card.isConnected) return;
+  const c3 = card.querySelector(".ix3d"), bg = card.querySelector(".ixbg"), g = bg.getContext("2d");
+  const r = new T.WebGLRenderer({ canvas: c3, antialias: true, alpha: true });
+  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5)); r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.6;
+  const scene = new T.Scene(), cam = new T.PerspectiveCamera(32, 1, .1, 50); cam.position.set(0, 0, 7);
+  const pm = new T.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnvironment(), .03).texture; pm.dispose();
+  const geo = new T.SphereGeometry(1, 128, 96), pos = geo.attributes.position, base = pos.array.slice();
+  const mat = new T.MeshPhysicalMaterial({ color: 0xffffff, metalness: 1, roughness: .1, clearcoat: 1, clearcoatRoughness: .06 });
+  const mesh = new T.Mesh(geo, mat); scene.add(mesh);
+  const key = new T.DirectionalLight(0xffffff, 2.6); key.position.set(3, 3, 2); scene.add(key);
+  const rim = new T.DirectionalLight(0xffffff, 1.6); rim.position.set(-3, -1, -2); scene.add(rim);
+  const size = () => { const w = c3.clientWidth, h = c3.clientHeight; if(!w) return; r.setSize(w, h, false); cam.aspect = w / h;
+    cam.position.z = w < 700 ? 9.5 : 7; cam.updateProjectionMatrix(); };
+  size(); addEventListener("resize", size);
+  let last = 0, mx = 0, my = 0;
+  card.addEventListener("pointermove", e => { const b = card.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width - .5; my = (e.clientY - b.top) / b.height - .5; });
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const frame = t => {
+    if(!card.isConnected){ removeEventListener("resize", size); geo.dispose(); mat.dispose(); scene.environment?.dispose(); r.dispose(); return; }
+    requestAnimationFrame(frame);
+    if(document.hidden || t - last < 33) return; last = t;
+    const s = still ? 2 : t / 1000, a = pos.array;
+    for(let i = 0; i < a.length; i += 3){
+      const x = base[i], y = base[i + 1], z = base[i + 2];
+      const d = 1 + .24 * Math.sin(x * 2.4 + s * .9) * Math.sin(y * 2.9 + s * .7) + .17 * Math.sin(z * 3.5 - s * .8 + y * 1.6) + .06 * Math.sin((x - y + z) * 6 + s * 1.4);
+      const w = y * 1.3 * Math.sin(s * .45), cw = Math.cos(w), sw = Math.sin(w); // slow twist for a liquid, ribbon-like flow
+      a[i] = (x * cw - z * sw) * d; a[i + 1] = y * d * 1.08; a[i + 2] = (x * sw + z * cw) * d;
+    }
+    pos.needsUpdate = true; geo.computeVertexNormals();
+    mesh.rotation.y = s * .22 + mx * .7; mesh.rotation.x = Math.sin(s * .3) * .3 + my * .5;
+    r.render(scene, cam);
+    g.clearRect(0, 0, bg.width, bg.height); const k = 2.6;
+    g.drawImage(c3, bg.width * (1 - k) / 2, bg.height * (1 - k) / 2, bg.width * k, bg.height * k);
+  };
+  requestAnimationFrame(frame);
+}
+
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 36;
+const APP_VERSION = 37;
 // Floating amber dust in the AI hero: ~40 slow particles, 30 fps, stops when the hero leaves the page or the tab is hidden
 function heroDust(hero) {
   const c = document.createElement("canvas"); c.className = "aizdust"; hero.prepend(c);
@@ -2944,9 +3102,10 @@ document.addEventListener("keydown", e => {
 // Dark (green neon) is the default look until the user picks a theme
 const savedTheme = read(KEY + "-theme", null); document.documentElement.dataset.theme = savedTheme || "dark";
 load(); initAccess(); applyLang(); route(); initFirebase(); checkVersion();
-if(!profile) showOnboarding(); else showWelcome();
+bgFx();
+showIntro(() => { if(!profile) showOnboarding(); else showWelcome(); });
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=36" defer></script>
+<script src="mascot3d.js?v=37" defer></script>
 </body>
 </html>
