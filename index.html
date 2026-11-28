@@ -2375,8 +2375,7 @@ actions["bg-mode"] = el => { bgFx(el.dataset.m); write(KEY + "-bg", bgMode); rou
 // Full-screen intro on every open: big IZUMI EDGE title, a slowly morphing liquid-chrome shape (Three.js) and a blurred copy behind it
 function showIntro(next){
   const el = document.createElement("div"); el.className = "ix"; el.dir = "ltr";
-  el.innerHTML = `<div class="ixcard"><canvas class="ixbg" width="80" height="50"></canvas>
-    <header class="ixtop"><div class="ixlogo">${EMBLEM}<span>IZUMI EDGE</span></div>
+  el.innerHTML = `<div class="ixcard">    <header class="ixtop"><div class="ixlogo">${EMBLEM}<span>IZUMI EDGE</span></div>
       <div class="ixauth"><button class="ixb on" data-ix="enter">${L("ادخل", "Enter")}</button><button class="ixb" data-ix="acct">${signedIn() ? L("حسابي", "Account") : L("تسجيل الدخول", "Sign in")}</button></div></header>
     <div class="ixyear">${new Date().getFullYear()}</div>
     <h1 class="ixword">IZUMI EDGE</h1>
@@ -2393,50 +2392,131 @@ function showIntro(next){
   el.addEventListener("click", e => { const b = e.target.closest("[data-ix]"); if(b) go(b.dataset.ix === "acct"); });
   introBlob(el.querySelector(".ixcard")).catch(() => {});
 }
+// A glass butterfly (dark see-through wings with bright, faintly rainbow edges) that flies around the entry screen
+// and lands on the letters of "EDGE", rests there slowly opening and closing its wings, then flies to another letter.
 async function introBlob(card){
-  const CDN = "https://cdn.jsdelivr.net/npm/three@0.160.0";
-  const [T, { RoomEnvironment }] = await Promise.all([import(`${CDN}/+esm`), import(`${CDN}/examples/jsm/environments/RoomEnvironment.js/+esm`)]);
+  const T = await import("https://cdn.jsdelivr.net/npm/three@0.160.0/+esm");
   if(!card.isConnected) return;
-  const c3 = card.querySelector(".ix3d"), bg = card.querySelector(".ixbg"), g = bg.getContext("2d");
+  const c3 = card.querySelector(".ix3d"), word = card.querySelector(".ixword");
   const r = new T.WebGLRenderer({ canvas: c3, antialias: true, alpha: true });
-  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.25)); r.toneMapping = T.ACESFilmicToneMapping; r.toneMappingExposure = 1.6;
-  const scene = new T.Scene(), cam = new T.PerspectiveCamera(32, 1, .1, 50); cam.position.set(0, 0, 7);
-  const pm = new T.PMREMGenerator(r); scene.environment = pm.fromScene(new RoomEnvironment(), .03).texture; pm.dispose();
-  // The shape is bent on the GPU (vertex shader) instead of in JavaScript: the same wave + twist formula, normals from two nearby points
-  const geo = new T.SphereGeometry(1, 160, 120), uT = { value: 0 };
-  const mat = new T.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .08 });
-  mat.onBeforeCompile = sh => {
-    sh.uniforms.uT = uT;
-    sh.vertexShader = "uniform float uT;\nvec3 dsp(vec3 p){ float s=uT;\n" +
-      " float d=1.+.24*sin(p.x*2.4+s*.9)*sin(p.y*2.9+s*.7)+.17*sin(p.z*3.5-s*.8+p.y*1.6)+.06*sin((p.x-p.y+p.z)*6.+s*1.4);\n" +
-      " float w=p.y*1.3*sin(s*.45); float cw=cos(w), sw=sin(w);\n" +
-      " return vec3((p.x*cw-p.z*sw)*d, p.y*d*1.08, (p.x*sw+p.z*cw)*d); }\n" + sh.vertexShader;
-    sh.vertexShader = sh.vertexShader
-      .replace("#include <beginnormal_vertex>", `vec3 p0=dsp(position); vec3 ta=normalize(cross(normal, abs(normal.y)<.99?vec3(0.,1.,0.):vec3(1.,0.,0.))); vec3 tb=cross(normal,ta);
-        vec3 objectNormal=normalize(cross(dsp(normalize(position+ta*.01))-p0, dsp(normalize(position+tb*.01))-p0)); if(dot(objectNormal,p0)<0.) objectNormal=-objectNormal;`)
-      .replace("#include <begin_vertex>", "vec3 transformed = p0;");
+  r.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+  const scene = new T.Scene(), cam = new T.PerspectiveCamera(35, 1, .1, 100); cam.position.set(0, 0, 10);
+
+  // wing texture: the wing outline painted on a canvas (dark glass inside, glowing edge, thin veins)
+  const B = { x0: -1.25, x1: 0, y0: -.95, y1: 1.05 }, TW = 512, TH = Math.round(TW * (B.y1 - B.y0) / (B.x1 - B.x0));
+  const fore = p => { p.moveTo(0, .06); p.bezierCurveTo(-.25, .55, -.75, 1.02, -1.12, .92); p.bezierCurveTo(-1.24, .7, -1.05, .32, -.62, .12); p.bezierCurveTo(-.36, .03, -.12, 0, 0, -.02); };
+  const hind = p => { p.moveTo(0, -.03); p.bezierCurveTo(-.4, -.05, -.86, -.2, -.82, -.52); p.bezierCurveTo(-.78, -.86, -.42, -.94, -.22, -.7); p.bezierCurveTo(-.1, -.5, -.03, -.25, 0, -.03); };
+  const tex = (() => {
+    const cv = document.createElement("canvas"); cv.width = TW; cv.height = TH; const x = cv.getContext("2d");
+    const P = (px, py) => [(px - B.x0) / (B.x1 - B.x0) * TW, (B.y1 - py) / (B.y1 - B.y0) * TH];
+    const path = fn => { const pa = new Path2D(), pr = { moveTo: (a, b) => pa.moveTo(...P(a, b)), bezierCurveTo: (a, b, c, d, e, f) => pa.bezierCurveTo(...P(a, b), ...P(c, d), ...P(e, f)) }; fn(pr); pa.closePath(); return pa; };
+    const [ox, oy] = P(0, 0), rim = x.createLinearGradient(0, 0, TW, TH);
+    rim.addColorStop(0, "#ffffff"); rim.addColorStop(.35, "#cfe9ff"); rim.addColorStop(.5, "#ffd9b0"); rim.addColorStop(.65, "#d9ffe9"); rim.addColorStop(1, "#ffffff");
+    for(const fn of [fore, hind]){
+      const pa = path(fn), fill = x.createRadialGradient(ox, oy, 0, ox, oy, TW * 1.05);
+      fill.addColorStop(0, "rgba(8,8,10,.92)"); fill.addColorStop(.6, "rgba(18,18,22,.62)"); fill.addColorStop(1, "rgba(235,235,240,.5)");
+      x.fillStyle = fill; x.fill(pa);
+      x.save(); x.clip(pa); x.strokeStyle = "rgba(255,255,255,.10)"; x.lineWidth = 2;
+      for(let i = 0; i < 6; i++){ x.beginPath(); x.moveTo(ox, oy); const a = (fn === fore ? 1.9 : 3.6) + i * .28; x.lineTo(ox + Math.cos(a) * TW, oy - Math.sin(a) * TW); x.stroke(); }
+      x.restore();
+      x.save(); x.shadowColor = "rgba(255,255,255,.9)"; x.shadowBlur = 14; x.strokeStyle = rim; x.lineWidth = 7; x.stroke(pa); x.restore();
+      x.strokeStyle = "rgba(255,255,255,.95)"; x.lineWidth = 2; x.stroke(pa);
+    }
+    const t = new T.CanvasTexture(cv); t.anisotropy = 4; return t;
+  })();
+  // 3D wing: a fine curved sheet (cupped and slightly twisted) cut to the wing outline by the texture;
+  // the shader adds glassy rainbow sheen at grazing angles and a white highlight, so it reads as a real 3D glass wing
+  const wingGeo = (() => { const g = new T.PlaneGeometry(B.x1 - B.x0, B.y1 - B.y0, 48, 64); g.translate((B.x0 + B.x1) / 2, (B.y0 + B.y1) / 2, 0);
+    const p = g.attributes.position;
+    for(let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i); p.setZ(i, .34 * x * x - .24 * x * y + .1 * Math.sin(y * 3) * x - .06 * y * y); }
+    g.computeVertexNormals(); return g; })();
+  const uT = { value: 0 };
+  const wMat = new T.ShaderMaterial({ uniforms: { map: { value: tex }, uT }, transparent: true, side: T.DoubleSide, depthWrite: false,
+    vertexShader: `varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main(){ vUv = uv; vec4 mv = modelViewMatrix * vec4(position, 1.); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `uniform sampler2D map; uniform float uT; varying vec2 vUv; varying vec3 vN; varying vec3 vV;
+      void main(){
+        vec4 b = texture2D(map, vUv); if(b.a < .03) discard;
+        vec3 n = normalize(vN); if(!gl_FrontFacing) n = -n;
+        float f = pow(1. - abs(dot(n, vV)), 2.);
+        vec3 rb = .5 + .5 * cos(6.2831 * (f * 1.3 + vUv.x * .5 + vUv.y * .3 + vec3(0., .33, .67)) + uT * .5);
+        vec3 L = normalize(vec3(.4, .8, .6)); float sp = pow(max(dot(reflect(-L, n), vV), 0.), 22.);
+        vec3 c = b.rgb + rb * f * .75 + vec3(sp) * .85 + vec3(pow(f, 3.)) * .5;
+        gl_FragColor = vec4(c, clamp(b.a + f * .5 + sp * .5, 0., 1.)); }` });
+  const geos = [wingGeo];
+  const fly = new T.Group(), wings = [];
+  for(const side of [1, -1]){
+    const w = new T.Group(); w.scale.x = side; w.add(new T.Mesh(wingGeo, wMat));
+    fly.add(w); wings.push([w, side]);
+  }
+  const bodyMat = new T.MeshBasicMaterial({ color: 0x0c0c0e });
+  const body = new T.Mesh(new T.CapsuleGeometry(.045, .62, 4, 10), bodyMat); body.position.y = .02; fly.add(body);
+  const ant = new T.BufferGeometry().setFromPoints([new T.Vector3(-.16, .62, 0), new T.Vector3(0, .34, 0), new T.Vector3(.16, .62, 0)]);
+  fly.add(new T.Line(ant, new T.LineBasicMaterial({ color: 0xdddddd, transparent: true, opacity: .7 })));
+  scene.add(fly);
+
+  // letters of "EDGE" as landing spots (top centre of each glyph, in world units on the z = 0 plane)
+  let spots = [], unit = 1;
+  const toWorld = (px, py) => { const b = c3.getBoundingClientRect(); const v = new T.Vector3((px - b.left) / b.width * 2 - 1, -(py - b.top) / b.height * 2 + 1, .5).unproject(cam);
+    const dir = v.sub(cam.position).normalize(); return cam.position.clone().add(dir.multiplyScalar(-cam.position.z / dir.z)); };
+  const measure = () => {
+    const node = word.firstChild, txt = node?.textContent || "", start = txt.indexOf("EDGE"); spots = [];
+    if(start < 0) return;
+    for(let i = start; i < start + 4; i++){
+      const rg = document.createRange(); rg.setStart(node, i); rg.setEnd(node, i + 1); const b = rg.getBoundingClientRect();
+      const top = toWorld(b.left + b.width / 2, b.top + b.height * .15), bot = toWorld(b.left + b.width / 2, b.bottom - b.height * .12);
+      unit = top.distanceTo(bot); spots.push(top);
+    }
   };
-  const mesh = new T.Mesh(geo, mat); scene.add(mesh);
-  const key = new T.DirectionalLight(0xffffff, 2.6); key.position.set(3, 3, 2); scene.add(key);
-  const rim = new T.DirectionalLight(0xffffff, 1.6); rim.position.set(-3, -1, -2); scene.add(rim);
-  const size = () => { const w = c3.clientWidth, h = c3.clientHeight; if(!w) return; r.setSize(w, h, false); cam.aspect = w / h;
-    cam.position.z = w < 700 ? 9.5 : 7; cam.updateProjectionMatrix(); };
-  size(); addEventListener("resize", size);
-  let last = 0, mx = 0, my = 0, rx = 0, ry = 0;
-  g.filter = "blur(3px)";
-  card.addEventListener("pointermove", e => { const b = card.getBoundingClientRect(); mx = (e.clientX - b.left) / b.width - .5; my = (e.clientY - b.top) / b.height - .5; });
+  // fixed size: wingspan about 15% of the screen width (between 120 and 210 px), set only on resize
+  let S = 1;
+  const size = () => { const w = c3.clientWidth, h = c3.clientHeight; if(!w) return; r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); cam.updateMatrixWorld(); measure();
+    const hh = Math.tan(cam.fov * Math.PI / 360) * cam.position.z; S = Math.min(210, Math.max(120, w * .15)) * (2 * hh / h) / 2.5; };
+  size(); addEventListener("resize", size); document.fonts?.ready.then(size);
+
+  // flight: quadratic curve with a little wobble to the next spot, then a rest on the letter
+  const pos = new T.Vector3(-6, 3.5, 0), from = new T.Vector3(), ctrl = new T.Vector3(), to = new T.Vector3();
+  let state = "fly", k = 0, dur = 3, rest = 0, cur = -1, yaw = 0, tilt = -.35, last = 0;
+  const next = () => {
+    let i = Math.floor(Math.random() * spots.length); if(spots.length > 1 && i === cur) i = (i + 1) % spots.length;
+    const wander = Math.random() < .3 || !spots.length;
+    cur = wander ? cur : i; from.copy(pos);
+    // visible half-size of the screen at z = 0, so wandering and curves stay on screen (phones are narrow)
+    const hh = Math.tan(cam.fov * Math.PI / 360) * cam.position.z, hw = hh * cam.aspect;
+    to.copy(wander || !spots.length ? new T.Vector3((Math.random() - .5) * 1.5 * hw, (Math.random() * .9 - .1) * hh, 0) : spots[i]);
+    if(!wander) to.y += unit * .02;
+    ctrl.copy(from).lerp(to, .5); ctrl.y = Math.min(hh * .85, ctrl.y + hh * (.25 + Math.random() * .3)); ctrl.x = Math.max(-hw * .85, Math.min(hw * .85, ctrl.x + (Math.random() - .5) * hw * .6));
+    dur = 2.2 + from.distanceTo(to) * .28; k = 0; state = wander ? "wander" : "fly";
+  };
+  next();
   const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const frame = t => {
-    if(!card.isConnected){ removeEventListener("resize", size); geo.dispose(); mat.dispose(); scene.environment?.dispose(); r.dispose(); return; }
+    if(!card.isConnected){ removeEventListener("resize", size); geos.forEach(g => g.dispose()); tex.dispose(); wMat.dispose(); r.dispose(); return; }
     requestAnimationFrame(frame);
-    if(document.hidden || (still && last)) return;
-    const s = still ? 2 : t / 1000; uT.value = s;
-    ry += (s * .22 + mx * .7 - ry) * .08; rx += (Math.sin(s * .3) * .3 + my * .5 - rx) * .08;
-    mesh.rotation.y = ry; mesh.rotation.x = rx;
+    if(document.hidden) return;
+    const dt = Math.min(.05, (t - (last || t)) / 1000), s = t / 1000; last = t;
+    fly.scale.setScalar(S); uT.value = s;
+    let flap;
+    if(state === "rest"){
+      rest -= dt; flap = .25 + .55 * (.5 + .5 * Math.sin(s * 2.1));
+      yaw += (0 - yaw) * .05; tilt += (-.55 - tilt) * .05;
+      if(rest <= 0 && !still) next();
+    } else {
+      k = Math.min(1, k + dt / dur); const e = k * k * (3 - 2 * k), u = 1 - e;
+      const px = u * u * from.x + 2 * u * e * ctrl.x + e * e * to.x, py = u * u * from.y + 2 * u * e * ctrl.y + e * e * to.y;
+      const wob = Math.sin(s * 3.1) * .12 * Math.sin(Math.PI * k);
+      const vx = px - pos.x, vy = py + wob - pos.y; pos.set(px, py + wob, 0);
+      if(vx * vx + vy * vy > 1e-6){ let h = Math.atan2(vy, vx) - Math.PI / 2; while(h - yaw > Math.PI) h -= 2 * Math.PI; while(h - yaw < -Math.PI) h += 2 * Math.PI; yaw += (h - yaw) * .08; }
+      tilt += (-.35 - tilt) * .06;
+      flap = .15 + 1.05 * (.5 + .5 * Math.sin(s * 19));
+      if(k >= 1){ if(state === "wander") next(); else { state = "rest"; rest = 2.6 + Math.random() * 2.6; } }
+    }
+    if(still){ flap = .5; }
+    for(const [w, side] of wings) w.rotation.y = flap * side;
+    // perched: sit on the top of the letter (body above it), with a slow sway so the 3D wings catch the light
+    fly.position.copy(pos); if(state === "rest") fly.position.y += S * .55;
+    fly.rotation.set(tilt, Math.sin(s * .7) * .35, yaw, "ZXY");
     r.render(scene, cam);
-    // blurred copy behind: a tiny canvas (blurred inside, cheap) that the browser scales up; refreshed 15 times a second
-    if(t - last > 66){ last = t; g.clearRect(0, 0, bg.width, bg.height); const k = 2.6;
-      g.drawImage(c3, bg.width * (1 - k) / 2, bg.height * (1 - k) / 2, bg.width * k, bg.height * k); }
   };
   requestAnimationFrame(frame);
 }
@@ -2444,7 +2524,7 @@ async function introBlob(card){
 /* ---------- updates ---------- */
 // version.json is bumped on every publish; a newer number means the user is running an old copy.
 // Reloading only replaces the app itself: trades and settings stay in this browser.
-const APP_VERSION = 38;
+const APP_VERSION = 39;
 // Floating amber dust in the AI hero: ~40 slow particles, 30 fps, stops when the hero leaves the page or the tab is hidden
 function heroDust(hero) {
   const c = document.createElement("canvas"); c.className = "aizdust"; hero.prepend(c);
@@ -3114,6 +3194,6 @@ bgFx();
 showIntro(() => { if(!profile) showOnboarding(); else showWelcome(); });
 </script>
 <!-- 3D mascot companion (Three.js loads only after the page is ready) -->
-<script src="mascot3d.js?v=38" defer></script>
+<script src="mascot3d.js?v=39" defer></script>
 </body>
 </html>
